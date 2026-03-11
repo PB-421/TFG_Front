@@ -23,6 +23,20 @@ export const useAuthStore = defineStore('auth', {
   },
 
   actions: {
+    async isMicrosoftUser():Promise<string> {
+      // Sacar si hay session con Microsoft (OAuth)
+      const { data: identities, error: identitiesError } = await supabase.auth.getUserIdentities()
+
+      if (!identitiesError) {
+        const azureIdentity = identities.identities.find((identity) => identity.provider === 'azure')
+
+        if (azureIdentity) {
+          return azureIdentity.user_id;
+        }
+        return "00000000-0000-0000-0000-000000000000";
+      }
+      return "00000000-0000-0000-0000-000000000000";
+    },
     // ---------------- LOGIN LOCAL ----------------
     async loginLocal(email: string, password: string): Promise<void> {
       this.loading = true

@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import ModalWindow from '@/components/ModalWindow.vue'
+import ModalWindow from '@/components/ModalWindow.vue' 
+import { useAuthStore } from '@/stores/auth.store'
 
 const API_URL = import.meta.env.VITE_API_URL
+const auth = useAuthStore()
 
 interface Profile {
   id: string
@@ -19,8 +21,9 @@ const modalMode = ref<'create'|'edit'|'delete'>('create')
 const selectedUser = ref<Profile | null>(null)
 
 async function loadProfiles() {
+  const userId = await auth.isMicrosoftUser();
   try {
-    const res = await fetch(`${API_URL}/api/profiles/GetAll`, { credentials:'include' })
+    const res = await fetch(`${API_URL}/api/profiles/GetAll?adminId=${userId}`, { credentials:'include' })
     profiles.value = await res.json()
   } finally {
     loading.value = false
@@ -47,8 +50,10 @@ function openDelete(user:Profile){
 
 async function handleSubmit(data:any){
 
+  const userId = await auth.isMicrosoftUser();
+
   if(modalMode.value==='create'){
-    await fetch(`${API_URL}/api/auth/register`,{
+    await fetch(`${API_URL}/api/auth/register?adminId=${userId}`,{
       method:'POST',
       credentials:'include',
       headers:{'Content-Type':'application/json'},
@@ -57,7 +62,7 @@ async function handleSubmit(data:any){
   }
 
   if(modalMode.value==='edit' && selectedUser.value){
-    await fetch(`${API_URL}/api/profiles/UpdateUser/${selectedUser.value.id}`,{
+    await fetch(`${API_URL}/api/profiles/UpdateUser/${selectedUser.value.id}?adminId=${userId}`,{
       method:'PUT',
       credentials:'include',
       headers:{'Content-Type':'application/json'},
@@ -69,7 +74,7 @@ async function handleSubmit(data:any){
   }
 
   if(modalMode.value==='delete' && selectedUser.value){
-    await fetch(`${API_URL}/api/auth/delete/${selectedUser.value.id}`,{
+    await fetch(`${API_URL}/api/auth/delete/${selectedUser.value.id}?adminId=${userId}`,{
       method:'DELETE',
       credentials:'include'
     })
