@@ -1,0 +1,3 @@
+VUE 3
+VUE Router
+Tailwind CSS: npm install -D tailwindcss postcss autoprefixer  |  npx tailwindcss init -p
