@@ -17,6 +17,7 @@ const props = defineProps<{
   show: boolean
   mode: 'create' | 'edit' | 'delete'
   item: User | Subject | null
+  type: 'user' | 'subject' // <--- Nueva prop
 }>()
 
 const emit = defineEmits(['close','submit'])
@@ -82,7 +83,7 @@ function close() {
   <div v-if="props.show" class="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
     <div class="bg-white dark:bg-slate-900 rounded-xl p-6 w-420px space-y-4">
       <h2 class="text-lg font-bold">
-        <template v-if="isUserProp()">
+        <template v-if="props.type === 'user'">
           <span v-if="props.mode === 'create'">Crear Usuario</span>
           <span v-else-if="props.mode === 'edit'">Editar Usuario</span>
           <span v-else>Eliminar Usuario</span>
@@ -105,7 +106,7 @@ function close() {
         />
 
         <!-- Campos exclusivos de User -->
-        <template v-if="isUserProp()">
+        <template v-if="props.type === 'user'">
           <input
             v-if="props.mode === 'create'"
             v-model="email"

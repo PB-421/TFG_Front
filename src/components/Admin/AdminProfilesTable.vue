@@ -230,6 +230,7 @@ onMounted(loadProfiles)
       :show="modalOpen"
       :mode="modalMode"
       :item="selectedUser"
+      type="user" 
       @close="modalOpen = false"
       @submit="handleSubmit"
     />

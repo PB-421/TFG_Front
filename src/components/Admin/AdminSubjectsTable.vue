@@ -176,6 +176,7 @@ onMounted(loadSubjects)
       :show="modalOpen"
       :mode="modalMode"
       :item="selectedSubject"
+      type="subject"
       @close="modalOpen = false"
       @submit="handleSubmit"
     />
