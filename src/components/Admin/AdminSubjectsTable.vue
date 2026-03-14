@@ -1,8 +1,11 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import ModalWindow from '@/components/ModalWindow.vue'
+import { useAuthStore } from '@/stores/auth.store'
+
 
 const API_URL = import.meta.env.VITE_API_URL
+const auth = useAuthStore()
 
 interface Subject {
   id?: string
@@ -49,10 +52,13 @@ function openDelete(subject: Subject) {
 }
 
 async function handleSubmit(data: Subject) {
+
+  const userId = await auth.isMicrosoftUser();
+
   const headers = { 'Content-Type': 'application/json' }
   try {
     if (modalMode.value === 'create') {
-      await fetch(`${API_URL}/api/subjects`, {
+      await fetch(`${API_URL}/api/subjects?adminId=${userId}`, {
         method: 'POST',
         credentials: 'include',
         headers,
@@ -61,7 +67,7 @@ async function handleSubmit(data: Subject) {
     }
 
     if (modalMode.value === 'edit' && selectedSubject.value) {
-      await fetch(`${API_URL}/api/subjects/${selectedSubject.value.id}`, {
+      await fetch(`${API_URL}/api/subjects/${selectedSubject.value.id}?adminId=${userId}`, {
         method: 'PUT',
         credentials: 'include',
         headers,
@@ -70,7 +76,7 @@ async function handleSubmit(data: Subject) {
     }
 
     if (modalMode.value === 'delete' && selectedSubject.value) {
-      await fetch(`${API_URL}/api/subjects/${selectedSubject.value.id}`, {
+      await fetch(`${API_URL}/api/subjects/${selectedSubject.value.id}?adminId=${userId}`, {
         method: 'DELETE',
         credentials: 'include'
       })
