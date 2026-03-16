@@ -13,7 +13,7 @@ const props = defineProps<{
   show: boolean
   mode: 'create' | 'edit' | 'delete'
   item: any
-  type: 'user' | 'subject' | 'group'
+  type: 'user' | 'subject' | 'group' | 'location' // Añadido location
 }>()
 
 const emit = defineEmits(['close','submit'])
@@ -25,6 +25,7 @@ const password = ref('')
 const role = ref('student')
 const subjectId = ref('')
 const teacherId = ref('')
+const capacity = ref<number>(0)
 
 // Lists for selects
 const teachers = ref<User[]>([])
@@ -66,6 +67,8 @@ watch(() => props.item, (value) => {
   } else if (props.type === 'group') {
     subjectId.value = value.subjectId || ''
     teacherId.value = value.teacherId || ''
+  } else if (props.type === 'location') {
+    capacity.value = value.capacity || 0
   }
 })
 
@@ -76,6 +79,7 @@ function resetForm() {
   role.value = 'student'
   subjectId.value = ''
   teacherId.value = ''
+  capacity.value = 0
 }
 
 function submit() {
@@ -85,6 +89,8 @@ function submit() {
     Object.assign(payload, { email: email.value, password: password.value, role: role.value })
   } else if (props.type === 'group') {
     Object.assign(payload, { subjectId: subjectId.value, teacherId: teacherId.value })
+  } else if (props.type === 'location') {
+    payload.capacity = Number(capacity.value)
   }
   
   emit('submit', payload)
@@ -103,14 +109,15 @@ function close() {
         <span v-if="props.mode === 'create'">Crear</span>
         <span v-else-if="props.mode === 'edit'">Editar</span>
         <span v-else>Eliminar</span>
-        {{ props.type === 'user' ? 'Usuario' : props.type === 'subject' ? 'Asignatura' : 'Grupo' }}
+        {{ props.type === 'user' ? 'Usuario' : props.type === 'subject' ? 'Asignatura' : props.type === 'location' ? 'Ubicación' :'Grupo' }}
       </h2>
 
       <div v-if="props.mode !== 'delete'" class="space-y-3">
         <div>
           <label class="text-xs font-semibold text-slate-500 uppercase ml-1">Nombre</label>
-          <input v-model="name" placeholder="Ej: Programación III" class="w-full border rounded-lg p-2.5 dark:bg-slate-800 dark:border-slate-700 mt-1" />
+          <input v-model="name" placeholder="Nombre..." class="w-full border rounded-lg p-2.5 dark:bg-slate-800 dark:border-slate-700 mt-1" />
         </div>
+
 
         <template v-if="props.type === 'group'">
           <div>
@@ -138,6 +145,11 @@ function close() {
             <option value="teacher">Profesor</option>
             <option value="admin">Administrador</option>
           </select>
+        </template>
+
+        <template v-if="props.type === 'location'">
+          <label class="text-xs font-semibold text-slate-500 uppercase ml-1">Aforo Máximo</label>
+          <input v-model="capacity" type="number" placeholder="Ej: 30" class="w-full border rounded-lg p-2.5 dark:bg-slate-800 dark:border-slate-700 mt-1" />
         </template>
       </div>
 

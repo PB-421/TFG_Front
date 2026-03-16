@@ -20,9 +20,10 @@ interface Group {
   name: string
 }
 
-interface Localizacion {
+interface Location {
   id: string
   name: string
+  capacity: number
 }
 
 interface Horario {
@@ -33,7 +34,7 @@ interface Horario {
 const profiles = ref<Profile[]>([])
 const subjects = ref<Subject[]>([])
 const groups = ref<Group[]>([])
-const localizaciones = ref<Localizacion[]>([])
+const locations = ref<Location[]>([])
 const horarios = ref<Horario[]>([])
 
 const loading = ref(true)
@@ -52,14 +53,14 @@ async function loadData() {
       fetch(`${API_URL}/api/profiles/GetAll`, { credentials:'include' }),
       fetch(`${API_URL}/api/subjects`, { credentials:'include' }),
       fetch(`${API_URL}/api/groups`, { credentials:'include' }),
-      fetch(`${API_URL}/api/localizaciones/GetAll`, { credentials:'include' }),
+      fetch(`${API_URL}/api/locations`, { credentials:'include' }),
       fetch(`${API_URL}/api/horarios/GetAll`, { credentials:'include' })
     ])
 
     profiles.value = await usersRes.json()
     subjects.value = await subjectsRes.json()
     groups.value = await gruposRes.json()
-    localizaciones.value = await locRes.json()
+    locations.value = await locRes.json()
     horarios.value = await horariosRes.json()
 
   } finally {
@@ -97,7 +98,7 @@ const cards = [
     icon: 'location_on',
     path: '/admin/localizaciones',
     color: 'text-amber-600 bg-amber-50 dark:bg-amber-900/30',
-    get count(){ return localizaciones.value.length }
+    get count(){ return locations.value.length }
   },
   {
     name: 'Horarios',

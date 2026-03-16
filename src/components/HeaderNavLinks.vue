@@ -11,11 +11,11 @@ const auth = useAuthStore()
 
 const linksByRole = {
   admin: [
-    { name: 'Dahsboard', path: '/admin' },
+    { name: 'Dashboard', path: '/admin' },
     { name: 'Usuarios', path: '/admin/users' },
     { name: 'Asignaturas', path: '/admin/subjets' },
     { name: 'Grupos', path: '/admin/groups' },
-    { name: 'Localizaciones', path: '/admin/localizaciones' },
+    { name: 'Localizaciones', path: '/admin/locations' },
     { name: 'Horarios', path: '/admin/horarios' }
   ],
 

@@ -9,6 +9,7 @@ import AdminProfilesTable from '@/components/Admin/AdminProfilesTable.vue'
 import AdminDashboard from '@/components/Admin/AdminDashboard.vue'
 import AdminSubjectsTable from '@/components/Admin/AdminSubjectsTable.vue'
 import AdminGroupsTable from '@/components/Admin/AdminGroupsTable.vue'
+import AdminLocationsTable from '@/components/Admin/AdminLocationsTable.vue'
 
 const routes = [
   { 
@@ -31,6 +32,7 @@ const routes = [
       { path: 'users', component: AdminProfilesTable },
       { path: 'subjets', component: AdminSubjectsTable },
       { path: 'groups', component: AdminGroupsTable },
+      { path: 'locations', component: AdminLocationsTable },
       // más rutas admin...
     ]
   },
