@@ -8,6 +8,7 @@ import StudentView from '@/views/StudentView.vue'
 import AdminProfilesTable from '@/components/Admin/AdminProfilesTable.vue'
 import AdminDashboard from '@/components/Admin/AdminDashboard.vue'
 import AdminSubjectsTable from '@/components/Admin/AdminSubjectsTable.vue'
+import AdminGroupsTable from '@/components/Admin/AdminGroupsTable.vue'
 
 const routes = [
   { 
@@ -29,7 +30,7 @@ const routes = [
       { path: '', component: AdminDashboard },
       { path: 'users', component: AdminProfilesTable },
       { path: 'subjets', component: AdminSubjectsTable },
-      //{ path: 'groups', component: GroupsView },
+      { path: 'groups', component: AdminGroupsTable },
       // más rutas admin...
     ]
   },

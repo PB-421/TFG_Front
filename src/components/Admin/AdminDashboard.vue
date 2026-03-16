@@ -15,7 +15,7 @@ interface Subject {
   name: string
 }
 
-interface Grupo {
+interface Group {
   id: string
   name: string
 }
@@ -32,7 +32,7 @@ interface Horario {
 
 const profiles = ref<Profile[]>([])
 const subjects = ref<Subject[]>([])
-const grupos = ref<Grupo[]>([])
+const groups = ref<Group[]>([])
 const localizaciones = ref<Localizacion[]>([])
 const horarios = ref<Horario[]>([])
 
@@ -51,14 +51,14 @@ async function loadData() {
     ] = await Promise.all([
       fetch(`${API_URL}/api/profiles/GetAll`, { credentials:'include' }),
       fetch(`${API_URL}/api/subjects`, { credentials:'include' }),
-      fetch(`${API_URL}/api/grupos/GetAll`, { credentials:'include' }),
+      fetch(`${API_URL}/api/groups`, { credentials:'include' }),
       fetch(`${API_URL}/api/localizaciones/GetAll`, { credentials:'include' }),
       fetch(`${API_URL}/api/horarios/GetAll`, { credentials:'include' })
     ])
 
     profiles.value = await usersRes.json()
     subjects.value = await subjectsRes.json()
-    grupos.value = await gruposRes.json()
+    groups.value = await gruposRes.json()
     localizaciones.value = await locRes.json()
     horarios.value = await horariosRes.json()
 
@@ -90,7 +90,7 @@ const cards = [
     icon: 'groups',
     path: '/admin/grupos',
     color: 'text-emerald-600 bg-emerald-50 dark:bg-emerald-900/30',
-    get count(){ return grupos.value.length }
+    get count(){ return groups.value.length }
   },
   {
     name: 'Localizaciones',

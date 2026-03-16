@@ -14,7 +14,7 @@ const linksByRole = {
     { name: 'Dahsboard', path: '/admin' },
     { name: 'Usuarios', path: '/admin/users' },
     { name: 'Asignaturas', path: '/admin/subjets' },
-    { name: 'Grupos', path: '/admin/grupos' },
+    { name: 'Grupos', path: '/admin/groups' },
     { name: 'Localizaciones', path: '/admin/localizaciones' },
     { name: 'Horarios', path: '/admin/horarios' }
   ],
