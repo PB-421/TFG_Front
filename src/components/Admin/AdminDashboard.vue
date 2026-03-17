@@ -26,16 +26,16 @@ interface Location {
   capacity: number
 }
 
-interface Horario {
+interface Schedule {
   id: string
-  idGrupo: string
+  Grupo: string
 }
 
 const profiles = ref<Profile[]>([])
 const subjects = ref<Subject[]>([])
 const groups = ref<Group[]>([])
 const locations = ref<Location[]>([])
-const horarios = ref<Horario[]>([])
+const schedules = ref<Schedule[]>([])
 
 const loading = ref(true)
 
@@ -54,14 +54,14 @@ async function loadData() {
       fetch(`${API_URL}/api/subjects`, { credentials:'include' }),
       fetch(`${API_URL}/api/groups`, { credentials:'include' }),
       fetch(`${API_URL}/api/locations`, { credentials:'include' }),
-      fetch(`${API_URL}/api/horarios/GetAll`, { credentials:'include' })
+      fetch(`${API_URL}/api/schedules`, { credentials:'include' })
     ])
 
     profiles.value = await usersRes.json()
     subjects.value = await subjectsRes.json()
     groups.value = await gruposRes.json()
     locations.value = await locRes.json()
-    horarios.value = await horariosRes.json()
+    schedules.value = await horariosRes.json()
 
   } finally {
     loading.value = false
@@ -105,7 +105,7 @@ const cards = [
     icon: 'schedule',
     path: '/admin/horarios',
     color: 'text-pink-600 bg-pink-50 dark:bg-pink-900/30',
-    get count(){ return horarios.value.length }
+    get count(){ return schedules.value.length }
   }
 ]
 

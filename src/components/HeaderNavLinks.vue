@@ -16,7 +16,7 @@ const linksByRole = {
     { name: 'Asignaturas', path: '/admin/subjets' },
     { name: 'Grupos', path: '/admin/groups' },
     { name: 'Localizaciones', path: '/admin/locations' },
-    { name: 'Horarios', path: '/admin/horarios' }
+    { name: 'Horarios', path: '/admin/schedules' }
   ],
 
   teacher: [
