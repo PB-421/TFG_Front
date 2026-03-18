@@ -78,6 +78,7 @@ function openDelete(schedule: Schedule) {
 
 async function handleSubmit(data: any) {
   const headers = { 'Content-Type': 'application/json' }
+  let response;
   
   // Construimos el objeto según tus DTOs de C#
   const payload = {
@@ -90,8 +91,7 @@ async function handleSubmit(data: any) {
 
   try {
     if (modalMode.value === 'create') {
-      // Tu controlador espera una Lista: List<SchedulesDto>
-      await fetch(`${API_URL}/api/schedules`, {
+      response = await fetch(`${API_URL}/api/schedules`, {
         method: 'POST',
         credentials: 'include',
         headers,
@@ -100,7 +100,7 @@ async function handleSubmit(data: any) {
     }
 
     if (modalMode.value === 'edit' && selectedSchedule.value) {
-      await fetch(`${API_URL}/api/schedules/${selectedSchedule.value.id}`, {
+      response = await fetch(`${API_URL}/api/schedules/${selectedSchedule.value.id}`, {
         method: 'PUT',
         credentials: 'include',
         headers,
@@ -109,17 +109,40 @@ async function handleSubmit(data: any) {
     }
 
     if (modalMode.value === 'delete' && selectedSchedule.value) {
-      await fetch(`${API_URL}/api/schedules/${selectedSchedule.value.id}`, {
+      response = await fetch(`${API_URL}/api/schedules/${selectedSchedule.value.id}`, {
         method: 'DELETE',
         credentials: 'include'
       })
     }
     
-    modalOpen.value = false
-    fetchData()
+    if (response) {
+      const message = await response.text(); 
+      
+      if (response.ok) {
+        showAlert(message || 'Operación realizada con éxito', 'success');
+        modalOpen.value = false;
+        fetchData(); 
+      } else {
+        showAlert(message || 'Hubo un error en el servidor', 'error');
+      }
+    }
+
   } catch (error) {
     console.error("Error en la operación de horario:", error)
   }
+}
+
+const alert = ref<{ show: boolean, message: string, type: 'success' | 'error' }>({
+  show: false,
+  message: '',
+  type: 'success'
+})
+
+const showAlert = (message: string, type: 'success' | 'error' = 'success') => {
+  alert.value = { show: true, message, type }
+  setTimeout(() => {
+    alert.value.show = false
+  }, 4000)
 }
 
 onMounted(fetchData)
@@ -137,7 +160,7 @@ onMounted(fetchData)
     <div class="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
       <div v-if="loading" class="p-20 text-center">
         <div class="animate-spin inline-block size-8 border-[3px] border-indigo-600 border-t-transparent rounded-full mb-4"></div>
-        <p class="text-slate-500 font-medium">Sincronizando cronograma...</p>
+        <p class="text-slate-500 font-medium">Accediendo a la base de datos...</p>
       </div>
       
       <table v-else class="w-full text-left border-collapse">
@@ -205,5 +228,38 @@ onMounted(fetchData)
       @close="modalOpen = false"
       @submit="handleSubmit"
     />
+
+    <Transition
+      enter-active-class="transform ease-out duration-300 transition"
+      enter-from-class="translate-y-2 opacity-0 sm:translate-y-0 sm:translate-x-2"
+      enter-to-class="translate-y-0 opacity-100 sm:translate-x-0"
+      leave-active-class="transition ease-in duration-100"
+      leave-from-class="opacity-100"
+      leave-to-class="opacity-0"
+    >
+      <div v-if="alert.show" 
+          class="fixed bottom-5 right-5 z-100 max-w-sm w-full bg-white dark:bg-slate-800 shadow-2xl rounded-xl border-l-4 p-4 flex items-center gap-3"
+          :class="alert.type === 'success' ? 'border-green-500' : 'border-red-500'">
+        
+        <div :class="alert.type === 'success' ? 'text-green-500' : 'text-red-500'">
+          <span class="material-symbols-outlined">
+            {{ alert.type === 'success' ? 'check_circle' : 'error' }}
+          </span>
+        </div>
+
+        <div class="flex-1">
+          <p class="text-sm font-bold text-slate-900 dark:text-white">
+            {{ alert.type === 'success' ? '¡Éxito!' : 'Ha ocurrido un error' }}
+          </p>
+          <p class="text-xs text-slate-500 dark:text-slate-400">
+            {{ alert.message }}
+          </p>
+        </div>
+
+        <button @click="alert.show = false" class="text-slate-400 hover:text-slate-600">
+          <span class="material-symbols-outlined text-sm">close</span>
+        </button>
+      </div>
+    </Transition>
   </div>
 </template>

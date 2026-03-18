@@ -20,7 +20,7 @@ const modalOpen = ref(false)
 const modalMode = ref<'create'|'edit'|'delete'>('create')
 const selectedUser = ref<Profile | null>(null)
 
-async function loadProfiles() {
+async function fetchData() {
   const userId = await auth.isMicrosoftUser();
   try {
     const res = await fetch(`${API_URL}/api/profiles/GetAll?adminId=${userId}`, { credentials:'include' })
@@ -51,37 +51,63 @@ function openDelete(user:Profile){
 async function handleSubmit(data:any){
 
   const userId = await auth.isMicrosoftUser();
-
-  if(modalMode.value==='create'){
-    await fetch(`${API_URL}/api/auth/register?adminId=${userId}`,{
-      method:'POST',
-      credentials:'include',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify(data)
-    })
-  }
-
-  if(modalMode.value==='edit' && selectedUser.value){
-    await fetch(`${API_URL}/api/profiles/UpdateUser/${selectedUser.value.id}?adminId=${userId}`,{
-      method:'PUT',
-      credentials:'include',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({
-        name:data.name,
-        role:data.role
+  let response;
+  try{
+    if(modalMode.value==='create'){
+      response = await fetch(`${API_URL}/api/auth/register?adminId=${userId}`,{
+        method:'POST',
+        credentials:'include',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify(data)
       })
-    })
-  }
+    }
 
-  if(modalMode.value==='delete' && selectedUser.value){
-    await fetch(`${API_URL}/api/auth/delete/${selectedUser.value.id}?adminId=${userId}`,{
-      method:'DELETE',
-      credentials:'include'
-    })
-  }
+    if(modalMode.value==='edit' && selectedUser.value){
+      response = await fetch(`${API_URL}/api/profiles/UpdateUser/${selectedUser.value.id}?adminId=${userId}`,{
+        method:'PUT',
+        credentials:'include',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({
+          name:data.name,
+          role:data.role
+        })
+      })
+    }
 
-  modalOpen.value=false
-  loadProfiles()
+    if(modalMode.value==='delete' && selectedUser.value){
+      response = await fetch(`${API_URL}/api/auth/delete/${selectedUser.value.id}?adminId=${userId}`,{
+        method:'DELETE',
+        credentials:'include'
+      })
+    }
+
+    if (response) {
+        const message = await response.text(); 
+        
+        if (response.ok) {
+          showAlert(message || 'Operación realizada con éxito', 'success');
+          modalOpen.value = false;
+          fetchData(); 
+        } else {
+          showAlert(message || 'Hubo un error en el servidor', 'error');
+        }
+    }
+  } catch (error) {
+      console.error("Error en la operación:", error)
+  }
+}
+
+const alert = ref<{ show: boolean, message: string, type: 'success' | 'error' }>({
+  show: false,
+  message: '',
+  type: 'success'
+})
+
+const showAlert = (message: string, type: 'success' | 'error' = 'success') => {
+  alert.value = { show: true, message, type }
+  setTimeout(() => {
+    alert.value.show = false
+  }, 4000)
 }
 
 const getRoleClass = (role: string) => {
@@ -90,7 +116,7 @@ const getRoleClass = (role: string) => {
     : 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300'
 }
 
-onMounted(loadProfiles)
+onMounted(fetchData)
 </script>
 
 
@@ -224,8 +250,6 @@ onMounted(loadProfiles)
 
     </div>
 
-
-    <!-- MODAL -->
    <ModalWindow
       :show="modalOpen"
       :mode="modalMode"
@@ -235,6 +259,37 @@ onMounted(loadProfiles)
       @submit="handleSubmit"
     />
 
+    <Transition
+      enter-active-class="transform ease-out duration-300 transition"
+      enter-from-class="translate-y-2 opacity-0 sm:translate-y-0 sm:translate-x-2"
+      enter-to-class="translate-y-0 opacity-100 sm:translate-x-0"
+      leave-active-class="transition ease-in duration-100"
+      leave-from-class="opacity-100"
+      leave-to-class="opacity-0"
+    >
+      <div v-if="alert.show" 
+          class="fixed bottom-5 right-5 z-100 max-w-sm w-full bg-white dark:bg-slate-800 shadow-2xl rounded-xl border-l-4 p-4 flex items-center gap-3"
+          :class="alert.type === 'success' ? 'border-green-500' : 'border-red-500'">
+        
+        <div :class="alert.type === 'success' ? 'text-green-500' : 'text-red-500'">
+          <span class="material-symbols-outlined">
+            {{ alert.type === 'success' ? 'check_circle' : 'error' }}
+          </span>
+        </div>
 
+        <div class="flex-1">
+          <p class="text-sm font-bold text-slate-900 dark:text-white">
+            {{ alert.type === 'success' ? '¡Éxito!' : 'Ha ocurrido un error' }}
+          </p>
+          <p class="text-xs text-slate-500 dark:text-slate-400">
+            {{ alert.message }}
+          </p>
+        </div>
+
+        <button @click="alert.show = false" class="text-slate-400 hover:text-slate-600">
+          <span class="material-symbols-outlined text-sm">close</span>
+        </button>
+      </div>
+    </Transition>
   </div>
 </template>

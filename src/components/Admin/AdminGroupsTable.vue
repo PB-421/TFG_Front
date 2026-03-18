@@ -75,9 +75,10 @@ function openDelete(group: Group) {
 
 async function handleSubmit(data: any) {
   const headers = { 'Content-Type': 'application/json' }
+  let response;
   try {
     if (modalMode.value === 'create') {
-      await fetch(`${API_URL}/api/groups`, {
+      response = await fetch(`${API_URL}/api/groups`, {
         method: 'POST',
         credentials: 'include',
         headers,
@@ -90,7 +91,7 @@ async function handleSubmit(data: any) {
     }
 
     if (modalMode.value === 'edit' && selectedGroup.value) {
-      await fetch(`${API_URL}/api/groups/${selectedGroup.value.id}`, {
+      response = await fetch(`${API_URL}/api/groups/${selectedGroup.value.id}`, {
         method: 'PUT',
         credentials: 'include',
         headers,
@@ -104,17 +105,40 @@ async function handleSubmit(data: any) {
     }
 
     if (modalMode.value === 'delete' && selectedGroup.value) {
-      await fetch(`${API_URL}/api/groups/${selectedGroup.value.id}`, {
+      response = await fetch(`${API_URL}/api/groups/${selectedGroup.value.id}`, {
         method: 'DELETE',
         credentials: 'include'
       })
     }
+
+    if (response) {
+      const message = await response.text(); 
+      
+      if (response.ok) {
+        showAlert(message || 'Operación realizada con éxito', 'success');
+        modalOpen.value = false;
+        fetchData(); 
+      } else {
+        showAlert(message || 'Hubo un error en el servidor', 'error');
+      }
+    }
   } catch (error) {
     console.error("Error en la operación:", error)
   }
+}
 
-  modalOpen.value = false
-  fetchData()
+const alert = ref<{ show: boolean, message: string, type: 'success' | 'error' }>({
+  show: false,
+  message: '',
+  type: 'success'
+})
+
+// Función para mostrar la alerta y ocultarla tras 3 segundos
+const showAlert = (message: string, type: 'success' | 'error' = 'success') => {
+  alert.value = { show: true, message, type }
+  setTimeout(() => {
+    alert.value.show = false
+  }, 4000)
 }
 
 onMounted(fetchData)
@@ -203,5 +227,38 @@ onMounted(fetchData)
       @close="modalOpen = false"
       @submit="handleSubmit"
     />
+
+    <Transition
+      enter-active-class="transform ease-out duration-300 transition"
+      enter-from-class="translate-y-2 opacity-0 sm:translate-y-0 sm:translate-x-2"
+      enter-to-class="translate-y-0 opacity-100 sm:translate-x-0"
+      leave-active-class="transition ease-in duration-100"
+      leave-from-class="opacity-100"
+      leave-to-class="opacity-0"
+    >
+      <div v-if="alert.show" 
+          class="fixed bottom-5 right-5 z-100 max-w-sm w-full bg-white dark:bg-slate-800 shadow-2xl rounded-xl border-l-4 p-4 flex items-center gap-3"
+          :class="alert.type === 'success' ? 'border-green-500' : 'border-red-500'">
+        
+        <div :class="alert.type === 'success' ? 'text-green-500' : 'text-red-500'">
+          <span class="material-symbols-outlined">
+            {{ alert.type === 'success' ? 'check_circle' : 'error' }}
+          </span>
+        </div>
+
+        <div class="flex-1">
+          <p class="text-sm font-bold text-slate-900 dark:text-white">
+            {{ alert.type === 'success' ? '¡Éxito!' : 'Ha ocurrido un error' }}
+          </p>
+          <p class="text-xs text-slate-500 dark:text-slate-400">
+            {{ alert.message }}
+          </p>
+        </div>
+
+        <button @click="alert.show = false" class="text-slate-400 hover:text-slate-600">
+          <span class="material-symbols-outlined text-sm">close</span>
+        </button>
+      </div>
+    </Transition>
   </div>
 </template>
