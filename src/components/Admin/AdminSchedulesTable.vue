@@ -132,17 +132,25 @@ async function handleSubmit(data: any) {
   }
 }
 
-const alert = ref<{ show: boolean, message: string, type: 'success' | 'error' }>({
+const alert = ref({
   show: false,
   message: '',
-  type: 'success'
+  type: 'success' as 'success' | 'error'
 })
 
 const showAlert = (message: string, type: 'success' | 'error' = 'success') => {
   alert.value = { show: true, message, type }
-  setTimeout(() => {
-    alert.value.show = false
-  }, 4000)
+  
+  // Solo cerramos automáticamente si es éxito
+  if (type === 'success') {
+    setTimeout(() => {
+      alert.value.show = false
+    }, 4000)
+  }
+}
+
+const closeAlert = () => {
+  alert.value.show = false
 }
 
 onMounted(fetchData)
@@ -150,72 +158,68 @@ onMounted(fetchData)
 
 <template>
   <div class="space-y-4">
-    <div class="flex justify-between items-center">
-      <h1 class="text-2xl font-bold text-slate-900 dark:text-white">Gestión de Horarios</h1>
-      <button @click="openCreate" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-bold transition-all active:scale-95">
-        + Nuevo Horario
+    <div class="max-w-6xl mx-auto p-6 space-y-6">
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-200 pb-6">
+      <div>
+        <h1 class="text-3xl font-light text-slate-800 dark:text-white">Programación de Horarios</h1>
+        <p class="text-slate-500 text-sm mt-1">Calendario de sesiones</p>
+      </div>
+      <button @click="openCreate" class="flex items-center gap-2 bg-[#262626] hover:bg-black text-white px-6 py-2.5 rounded shadow-sm transition-all font-medium text-sm">
+        <span class="material-symbols-outlined text-sm">+</span>
+        Programar Sesión
       </button>
     </div>
 
-    <div class="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
-      <div v-if="loading" class="p-20 text-center">
-        <div class="animate-spin inline-block size-8 border-[3px] border-indigo-600 border-t-transparent rounded-full mb-4"></div>
-        <p class="text-slate-500 font-medium">Accediendo a la base de datos...</p>
-      </div>
-      
-      <table v-else class="w-full text-left border-collapse">
-        <thead>
-          <tr class="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-800">
-            <th class="px-6 py-4 text-xs font-bold uppercase text-slate-500 tracking-wider">Grupo</th>
-            <th class="px-6 py-4 text-xs font-bold uppercase text-slate-500 tracking-wider">Ubicación</th>
-            <th class="px-6 py-4 text-xs font-bold uppercase text-slate-500 tracking-wider">Inicio</th>
-            <th class="px-6 py-4 text-xs font-bold uppercase text-slate-500 tracking-wider">Fin</th>
-            <th class="px-6 py-4 text-xs font-bold uppercase text-slate-500 tracking-wider text-right">Acciones</th>
-          </tr>
-        </thead>
+    <div v-if="loading" class="flex flex-col items-center py-20">
+      <div class="animate-spin size-10 border-4 border-[#0090e4] border-t-transparent rounded-full mb-4"></div>
+      <p class="text-slate-500 animate-pulse">Cargando horarios...</p>
+    </div>
 
-        <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
-          <tr v-for="item in schedules" :key="item.id" class="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors group/row">
-            <td class="px-6 py-4">
-              <span class="text-sm font-bold text-slate-900 dark:text-white">
-                {{ item.group?.name || getGroupName(item.groupId) }}
+    <div v-else class="space-y-4">
+      <div v-for="item in schedules" :key="item.id" 
+           class="group relative flex items-center bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg overflow-hidden hover:border-indigo-300 transition-all">
+        
+        <div class="w-1.5 self-stretch bg-[#e4002b]"></div>
+
+        <div class="flex-1 grid grid-cols-1 md:grid-cols-12 items-center px-6 py-5 gap-4">
+          
+          <div class="md:col-span-3 flex items-center gap-4 border-r border-slate-100 pr-4">
+            <div class="text-center min-w-50px">
+              <div class="text-xs font-black text-slate-400 uppercase">{{ new Date(item.startDate).toLocaleString('es', { month: 'short' }) }}</div>
+              <div class="text-2xl font-light text-slate-800 dark:text-white leading-none">{{ new Date(item.startDate).getDate() }}</div>
+            </div>
+            <div class="flex flex-col">
+              <span class="text-sm font-bold text-slate-700 dark:text-slate-200">
+                {{ new Date(item.startDate).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }} - {{ new Date(item.endDate).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }}
               </span>
-            </td>
+            </div>
+          </div>
 
-            <td class="px-6 py-4">
-              <div class="flex items-center gap-2">
-                <span class="text-sm font-bold text-slate-900 dark:text-white">
-                  {{ item.location?.name || getLocationName(item.locationId) }}
-                </span>
-              </div>
-            </td>
+          <div class="md:col-span-4 flex flex-col">
+            <span class="text-xs text-slate-400 font-bold uppercase tracking-tighter">Grupo</span>
+            <span class="text-base font-semibold text-white dark:text-white">
+              {{ item.group?.name || getGroupName(item.groupId) }}
+            </span>
+          </div>
 
-            <td class="px-6 py-4 text-sm text-slate-600 dark:text-slate-400">
-              {{ formatDate(item.startDate) }}
-            </td>
+          <div class="md:col-span-3 flex flex-col">
+            <span class="text-xs text-slate-400 font-bold uppercase tracking-tighter">Ubicación</span>
+            <div class="flex items-center gap-1 text-sm text-slate-600 dark:text-slate-400">
+              {{ item.location?.name || getLocationName(item.locationId) }}
+            </div>
+          </div>
 
-            <td class="px-6 py-4 text-sm text-slate-600 dark:text-slate-400">
-              {{ formatDate(item.endDate) }}
-            </td>
-
-            <td class="px-6 py-4 text-right">
-              <div class="relative inline-block group">
-                 <button class="p-2 text-slate-400 group-hover:text-indigo-600 transition-colors">
-                  <span class="material-symbols-outlined text-lg leading-none">more_vert</span>
-                </button>
-                <div class="absolute right-0 top-0 mt-0 hidden group-hover:flex items-center bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-xl rounded-lg z-10 px-1 py-1">
-                  <button @click="openEdit(item)" class="p-2 hover:bg-indigo-50 text-slate-600 hover:text-indigo-600 rounded-md">
-                    <span class="material-symbols-outlined text-sm">edit</span>
-                  </button>
-                  <button @click="openDelete(item)" class="p-2 hover:bg-red-50 text-slate-600 hover:text-red-600 rounded-md">
-                    <span class="material-symbols-outlined text-sm">delete</span>
-                  </button>
-                </div>
-              </div>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+          <div class="md:col-span-2 flex justify-end gap-2">
+            <button @click="openEdit(item)" class="p-2 text-slate-400 hover:text-[#0090e4] hover:bg-indigo-50 rounded-full transition-colors">
+              <span class="material-symbols-outlined">edit_calendar</span>
+            </button>
+            <button @click="openDelete(item)" class="p-2 text-slate-300 hover:text-red-600 hover:bg-red-50 rounded-full transition-colors">
+              <span class="material-symbols-outlined">delete_sweep</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
     </div>
 
     <ModalWindow
@@ -231,34 +235,67 @@ onMounted(fetchData)
 
     <Transition
       enter-active-class="transform ease-out duration-300 transition"
-      enter-from-class="translate-y-2 opacity-0 sm:translate-y-0 sm:translate-x-2"
+      enter-from-class="translate-y-2 opacity-0 sm:translate-y-0 sm:translate-x-4"
       enter-to-class="translate-y-0 opacity-100 sm:translate-x-0"
-      leave-active-class="transition ease-in duration-100"
+      leave-active-class="transition ease-in duration-200"
       leave-from-class="opacity-100"
       leave-to-class="opacity-0"
     >
-      <div v-if="alert.show" 
-          class="fixed bottom-5 right-5 z-100 max-w-sm w-full bg-white dark:bg-slate-800 shadow-2xl rounded-xl border-l-4 p-4 flex items-center gap-3"
-          :class="alert.type === 'success' ? 'border-green-500' : 'border-red-500'">
+      <div v-if="alert.show && alert.type === 'success'" 
+          class="fixed bottom-6 right-6 z-100 max-w-sm w-full bg-white dark:bg-slate-900 shadow-xl rounded-lg border border-slate-200 dark:border-slate-800 flex items-stretch overflow-hidden">
         
-        <div :class="alert.type === 'success' ? 'text-green-500' : 'text-red-500'">
-          <span class="material-symbols-outlined">
-            {{ alert.type === 'success' ? 'check_circle' : 'error' }}
-          </span>
-        </div>
+        <div class="w-1.5 bg-green-500"></div>
 
-        <div class="flex-1">
-          <p class="text-sm font-bold text-slate-900 dark:text-white">
-            {{ alert.type === 'success' ? '¡Éxito!' : 'Ha ocurrido un error' }}
-          </p>
-          <p class="text-xs text-slate-500 dark:text-slate-400">
-            {{ alert.message }}
-          </p>
-        </div>
+        <div class="flex-1 p-4 flex items-center gap-4">
+          <div class="flex items-center justify-center h-10 w-10 rounded-full bg-green-50 dark:bg-green-900/20 text-green-600">
+            <span class="material-symbols-outlined text-xl">check_circle</span>
+          </div>
+          
+          <div class="flex-1">
+            <h3 class="text-sm font-bold text-slate-800 dark:text-white uppercase tracking-tight">¡Operación Exitosa!</h3>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{{ alert.message }}</p>
+          </div>
 
-        <button @click="alert.show = false" class="text-slate-400 hover:text-slate-600">
-          <span class="material-symbols-outlined text-sm">close</span>
-        </button>
+          <button @click="closeAlert" class="p-1 text-slate-300 hover:text-slate-500 transition-colors">
+            <span class="material-symbols-outlined text-lg">close</span>
+          </button>
+        </div>
+      </div>
+    </Transition>
+
+    <Transition
+      enter-active-class="ease-out duration-300"
+      enter-from-class="opacity-0"
+      enter-to-class="opacity-100"
+      leave-active-class="ease-in duration-200"
+      leave-from-class="opacity-100"
+      leave-to-class="opacity-0"
+    >
+      <div v-if="alert.show && alert.type === 'error'" class="fixed inset-0 z-200 flex items-center justify-center p-4">
+        <div class="fixed inset-0 bg-slate-900/40 backdrop-blur-[2px]" @click="closeAlert"></div>
+
+        <div class="relative bg-white dark:bg-slate-900 w-full max-w-md rounded-lg shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden transform transition-all">
+          
+          <div class="p-8 text-center">
+            <div class="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-red-50 dark:bg-red-900/10 mb-6">
+              <span class="material-symbols-outlined text-red-500 text-4xl font-light">error</span>
+            </div>
+            
+            <h3 class="text-2xl font-light text-slate-800 dark:text-white mb-3">Algo salió mal</h3>
+            <p class="text-slate-500 dark:text-slate-400 text-sm leading-relaxed">
+              {{ alert.message }}
+            </p>
+          </div>
+
+          <div class="px-8 pb-8 flex flex-col">
+            <button 
+              @click="closeAlert"
+              class="w-full bg-[#262626] hover:bg-black text-white px-6 py-3 rounded shadow-sm transition-all font-medium text-sm active:scale-[0.98]"
+            >
+              Cerrar y Reintentar
+            </button>
+          </div>
+        </div>
       </div>
     </Transition>
   </div>

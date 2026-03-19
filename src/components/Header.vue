@@ -43,32 +43,33 @@ const avatarUrl = computed(() => {
 </script>
 
 <template>
-  <header class="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md px-10 py-4 sticky top-0 z-50">
+  <header class="flex items-center justify-between border-b border-gray-200 bg-white px-8 py-3 sticky top-0 z-50 shadow-sm">
 
-    <div class="flex items-center gap-3 text-primary">
-      <div class="flex flex-col">
-        <h2 class="text-slate-900 dark:text-white text-lg font-bold leading-tight">Universidad Nebrija</h2>
-        <p class="text-slate-500 dark:text-slate-400 text-[10px] uppercase tracking-wider">Panel de Administración</p>
+    <div class="flex items-center gap-3">
+      <div class="flex flex-col border-l-4 border-[#e4002b] pl-3"> <h2 class="text-[#002d56] text-lg font-black tracking-tight leading-tight uppercase">
+          Nebrija <span class="font-light">Universidad</span>
+        </h2>
+        <p class="text-gray-500 text-[9px] uppercase tracking-[0.2em] font-semibold">Campus Virtual</p>
       </div>
     </div>
 
-    <div class="flex flex-1 justify-end gap-8">
+    <div class="flex flex-1 justify-end gap-6">
       <HeaderNavLinks />
 
-      <div class="flex items-center gap-3 border-l border-slate-200 dark:border-slate-800 pl-6">
+      <div class="flex items-center gap-4 border-l border-gray-100 pl-6">
 
         <div class="relative" ref="menuRef">
           <button 
             @click="toggleMenu"
-            class="flex items-center gap-3 p-1 pr-3 rounded-full bg-slate-100 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+            class="flex items-center gap-3 p-1.5 rounded-lg hover:bg-gray-50 transition-colors group"
           >
-            <div class="size-8 rounded-full overflow-hidden">
+            <div class="size-9 rounded-full overflow-hidden border-2 border-transparent group-hover:border-[#002d56] transition-all">
               <img :src="avatarUrl" alt="User" class="w-full h-full object-cover" />
             </div>
 
-            <div class="flex flex-col text-left leading-tight">
-              <span class="text-xs font-bold text-slate-700 dark:text-slate-200">{{ auth.name }}</span>
-              <span class="text-[10px] uppercase text-slate-500">{{ auth.role }}</span>
+            <div class="hidden md:flex flex-col text-left leading-tight">
+              <span class="text-xs font-bold text-[#002d56]">{{ auth.name }}</span>
+              <span class="text-[10px] uppercase text-gray-400 font-bold tracking-wider">{{ auth.role }}</span>
             </div>
           </button>
 
@@ -82,14 +83,18 @@ const avatarUrl = computed(() => {
           >
             <div 
               v-if="isMenuOpen" 
-              class="absolute right-0 mt-2 w-48 origin-top-right rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none overflow-hidden"
+              class="absolute right-0 mt-2 w-56 origin-top-right rounded-lg bg-white border border-gray-200 shadow-xl ring-1 ring-black/5 overflow-hidden"
             >
+              <div class="bg-gray-50 px-4 py-3 border-b border-gray-100">
+                <p class="text-[10px] uppercase text-gray-400 font-bold">Sesión iniciada como</p>
+                <p class="text-xs font-bold text-[#002d56] truncate">{{ auth.name }}</p>
+              </div>
               <div class="py-1">
                 <button
                   @click="handleLogout"
-                  class="flex items-center gap-2 w-full px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                  class="flex items-center gap-3 w-full px-4 py-2.5 text-sm text-gray-700 hover:bg-[#f0f0f0] hover:text-[#e4002b] transition-colors"
                 >
-                  <span class="material-symbols-outlined text-lg">(Icono)</span>
+                  <span class="material-symbols-outlined text-lg">logout</span>
                   Cerrar Sesión
                 </button>
               </div>

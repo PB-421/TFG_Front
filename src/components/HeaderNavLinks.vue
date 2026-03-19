@@ -44,17 +44,17 @@ const goToUrl = (path: string) => {
 </script>
 
 <template>
-  <nav class="flex items-center gap-1">
+  <nav class="flex items-center gap-2">
     <button
       v-for="link in navLinks"
       :key="link.path"
       @click="goToUrl(link.path)"
       :class="[
         route.path === link.path
-          ? 'bg-primary/10 text-primary font-bold'
-          : 'text-slate-600 dark:text-slate-400 font-medium hover:bg-slate-100 dark:hover:bg-slate-800'
+          ? 'bg-[#002d56] text-white shadow-sm' 
+          : 'text-slate-600 hover:bg-gray-100 hover:text-[#002d56]'
       ]"
-      class="text-sm px-4 py-2 rounded-lg transition-all duration-200"
+      class="text-sm px-4 py-2 rounded-md font-medium transition-all duration-200"
     >
       {{ link.name }}
     </button>

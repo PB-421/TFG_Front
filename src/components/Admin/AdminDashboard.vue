@@ -112,57 +112,57 @@ const cards = [
 </script>
 
 <template>
-
-<div class="p-8 max-w-7xl mx-auto space-y-8">
-
-  <div>
-    <p class="text-slate-500">
-      Gestión general del sistema
-    </p>
-  </div>
-
-  <div v-if="loading" class="text-center py-20">
-    <div class="animate-spin inline-block size-8 border-[3px] border-blue-600 border-t-transparent rounded-full"></div>
-  </div>
-
-  <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-
-    <router-link
-      v-for="card in cards"
-      :key="card.name"
-      :to="card.path"
-      class="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-md transition-all group"
-    >
-
-      <div class="flex items-center justify-between mb-4">
-
-        <div
-          class="p-3 rounded-lg"
-          :class="card.color"
-        >
-          <span class="material-symbols-outlined">
-            {{ card.icon }}
-          </span>
+  <div class="space-y-4">
+    <div class="max-w-7xl mx-auto p-6 space-y-6">
+      
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-200 pb-6">
+        <div>
+          <h1 class="text-3xl font-light text-slate-800 dark:text-white">Panel de Control</h1>
+          <p class="text-slate-500 text-sm mt-1">Gestión general del sistema</p>
         </div>
-
-        <span class="text-xs font-bold bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded">
-          registros
-        </span>
-
       </div>
 
-      <p class="text-slate-500 text-sm font-medium">
-        {{ card.name }}
-      </p>
+      <div v-if="loading" class="flex flex-col items-center py-20">
+        <div class="animate-spin size-10 border-4 border-[#0090e4] border-t-transparent rounded-full mb-4"></div>
+        <p class="text-slate-500 animate-pulse">Cargando estadísticas...</p>
+      </div>
 
-      <p class="text-3xl font-bold text-slate-900 dark:text-white mt-1">
-        {{ card.count }}
-      </p>
+      <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <router-link
+          v-for="card in cards"
+          :key="card.name"
+          :to="card.path"
+          class="group relative flex items-stretch bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg overflow-hidden hover:border-indigo-300 transition-all shadow-sm hover:shadow-md"
+        >
+          <div class="w-1.5 self-stretch bg-[#e4002b]"></div>
 
-    </router-link>
+          <div class="flex-1 p-6">
+            <div class="flex items-center justify-between mb-4">
+              <div 
+                class="p-2.5 rounded text-slate-700 dark:text-slate-200 bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 group-hover:text-[#0090e4] group-hover:bg-indigo-50 transition-colors"
+                :class="card.color"
+              >
+                <span class="material-symbols-outlined text-2xl">
+                  {{ card.icon }}
+                </span>
+              </div>
+            </div>
 
+            <div class="space-y-1">
+              <p class="text-xs text-slate-400 font-bold uppercase tracking-tight">
+                {{ card.name }}
+              </p>
+              <p class="text-4xl font-light text-slate-800 dark:text-white tracking-tight">
+                {{ card.count }}
+              </p>
+            </div>
+            
+            <div class="mt-4 flex items-center text-xs font-medium text-[#0090e4] opacity-0 group-hover:opacity-100 transition-opacity">
+              Gestionar <span class="material-symbols-outlined text-sm ml-1">arrow_forward</span>
+            </div>
+          </div>
+        </router-link>
+      </div>
+    </div>
   </div>
-
-</div>
-
 </template>
