@@ -11,6 +11,7 @@ import AdminSubjectsTable from '@/components/Admin/AdminSubjectsTable.vue'
 import AdminGroupsTable from '@/components/Admin/AdminGroupsTable.vue'
 import AdminLocationsTable from '@/components/Admin/AdminLocationsTable.vue'
 import AdminSchedulesTable from '@/components/Admin/AdminSchedulesTable.vue'
+import StudentCalendar from '@/components/Student/StudentCalendar.vue'
 
 const routes = [
   { 
@@ -37,10 +38,15 @@ const routes = [
       { path: 'schedules', component: AdminSchedulesTable },
     ]
   },
+
   {
     path: '/student',
     component: StudentView,
-    meta: { auth: true, role: 'student' }
+    meta: { auth: true, role: 'student' },
+    children: [
+      { path: '', component: StudentCalendar },
+      { path: 'subjectCatalog', component: AdminProfilesTable },
+    ]
   },
 
   // Catch-all redirect
@@ -56,7 +62,6 @@ const router = createRouter({
 router.beforeEach(async (to) => {
   const auth = useAuthStore()
 
-  // Asegurarnos de inicializar la sesión una sola vez
   if (!auth.initialized) {
     await auth.autoLogin()
   }
@@ -68,7 +73,6 @@ router.beforeEach(async (to) => {
 
   // Comprobar rol
   if (to.meta.role && auth.role !== to.meta.role) {
-    // Puedes redirigir al dashboard correspondiente según el rol
     return { path: '/dashboard' }
   }
 
