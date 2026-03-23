@@ -4,7 +4,6 @@ import ModalWindow from '@/components/ModalWindow.vue'
 import { useAuthStore } from '@/stores/auth.store'
 
 const API_URL = import.meta.env.VITE_API_URL
-const auth = useAuthStore()
 
 interface Group {
   id?: string

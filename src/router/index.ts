@@ -12,6 +12,7 @@ import AdminGroupsTable from '@/components/Admin/AdminGroupsTable.vue'
 import AdminLocationsTable from '@/components/Admin/AdminLocationsTable.vue'
 import AdminSchedulesTable from '@/components/Admin/AdminSchedulesTable.vue'
 import StudentCalendar from '@/components/Student/StudentCalendar.vue'
+import StudentSubjectSelection from '@/components/Student/StudentSubjectSelection.vue'
 
 const routes = [
   { 
@@ -45,7 +46,7 @@ const routes = [
     meta: { auth: true, role: 'student' },
     children: [
       { path: '', component: StudentCalendar },
-      { path: 'subjectCatalog', component: AdminProfilesTable },
+      { path: 'subjectCatalog', component: StudentSubjectSelection },
     ]
   },
 

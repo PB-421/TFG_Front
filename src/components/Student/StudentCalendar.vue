@@ -6,6 +6,12 @@ const API_URL = import.meta.env.VITE_API_URL
 const auth = useAuthStore()
 
 // Interfaces basadas en tus DTOs
+
+interface Subject {
+  id: string
+  name: string
+}
+
 interface Group {
   id: string
   name: string
@@ -27,7 +33,13 @@ interface Profile {
   role: string
 }
 
+interface MapSubjects {
+  GroupId: string,
+  SubjectId: string
+}
+
 // Estado
+const subjects = ref<Subject[]>([])
 const schedules = ref<Schedule[]>([])
 const loading = ref(true)
 const currentDate = ref(new Date())
@@ -48,20 +60,27 @@ const monthNames = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
   "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"
 ]
 
+const getSubjectName = (id?: string) => subjects.value.find(s => s.id === id)?.name || id || 'Sin asignar'
+
 async function fetchStudentSchedules() {
   loading.value = true;
   const userId = await auth.isMicrosoftUser();
   try {
-    const res = await fetch(`${API_URL}/api/profiles/GetUser?id=${userId}`, {
-        credentials: 'include'
-      })
-      if (!res.ok) {
-        throw new Error('Usuario no encontrado')
-      }
-    const data:Promise<Profile> = await res.json()
+    const [resProfile, resAllSubjects] = await Promise.all([
+      fetch(`${API_URL}/api/profiles/GetUser?id=${userId}`, { credentials: 'include' }),
+      fetch(`${API_URL}/api/subjects`, { credentials: 'include' })
+    ]);
+
+    if (!resProfile.ok) throw new Error('Usuario no encontrado');
+    if(resAllSubjects) subjects.value = await resAllSubjects.json()
+    const data:Promise<Profile> = await resProfile.json()
     const resGroups = await fetch(`${API_URL}/api/groups/student/${(await data).id}`, { credentials: 'include' });
     if (!resGroups.ok) throw new Error("Error cargando grupos");
     const groups: Group[] = await resGroups.json();
+    const groupSubjectRelation: MapSubjects[] = groups.map(g => ({
+      GroupId: g.id,
+      SubjectId: g.subjectId
+    }))
     const groupIds = groups.map(g => g.id);
     console.log("grupos del estudiante: "+groupIds)
 
@@ -86,7 +105,18 @@ async function fetchStudentSchedules() {
     const schedulesPerGroup = await Promise.all(fetches);
     const allSchedules = schedulesPerGroup.flat();
     schedules.value = allSchedules;
-    console.log("Horarios: " +allSchedules)
+    // Crear mapa para búsquedas rápidas
+    const relationMap = new Map(
+      groupSubjectRelation.map(r => [r.GroupId, r.SubjectId])
+    );
+
+    schedules.value = schedules.value.map(s => {
+      const subjectId = relationMap.get(s.group.id);
+      if (subjectId) {
+        s.group.subjectId = subjectId;
+      }
+      return s;
+    });
 
   } catch (error) {
     console.error("Error cargando calendario:", error);
@@ -127,10 +157,21 @@ onMounted(fetchStudentSchedules)
       </div>
       
       <div class="flex gap-2">
-        <button @click="changeMonth(-1)" class="p-2 hover:bg-slate-100 rounded-full transition-colors">
+        <button 
+          @click="changeMonth(-1)"
+          class="p-2 flex items-center justify-center rounded-full
+                border border-slate-800 text-slate-800
+                transition-all duration-300
+                hover:bg-slate-800 hover:text-white hover:border-white">
           <span class="material-symbols-outlined">chevron_left</span>
         </button>
-        <button @click="changeMonth(1)" class="p-2 hover:bg-slate-100 rounded-full transition-colors">
+
+        <button 
+          @click="changeMonth(1)"
+          class="p-2 flex items-center justify-center rounded-full
+                border border-slate-800 text-slate-800
+                transition-all duration-300
+                hover:bg-slate-800 hover:text-white hover:border-white">
           <span class="material-symbols-outlined">chevron_right</span>
         </button>
       </div>
@@ -160,16 +201,21 @@ onMounted(fetchStudentSchedules)
           <div v-if="getSessionsForDay(day).length > 0" class="mt-10 px-2">
             <div v-for="session in getSessionsForDay(day)" :key="session.id"
                  class="bg-[#e4002b]/10 border-l-2 border-[#e4002b] px-2 py-1 mb-1 cursor-help">
+              
               <p class="text-[10px] font-bold text-[#e4002b] truncate uppercase">
-                {{ session.group?.name }}
+                {{ getSubjectName(session.group?.subjectId) }}
               </p>
               
               <div class="invisible group-hover:visible absolute z-50 left-full ml-2 top-0 w-64 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl p-4 rounded-lg pointer-events-none">
                 <div class="flex items-center gap-2 mb-2">
                   <span class="w-2 h-2 rounded-full bg-[#e4002b]"></span>
-                  <span class="text-xs font-bold uppercase tracking-tight">{{ session.group?.name }}</span>
+                  <span class="text-xs font-bold uppercase tracking-tight">{{ getSubjectName(session.group?.subjectId) }}</span>
                 </div>
                 <div class="space-y-2">
+                  <div class="flex flex-col">
+                    <span class="text-[10px] text-slate-400 font-bold uppercase">Grupo</span>
+                    <span class="text-sm text-slate-700 dark:text-slate-200">{{ session.group?.name }}</span>
+                  </div>
                   <div class="flex flex-col">
                     <span class="text-[10px] text-slate-400 font-bold uppercase">Horario</span>
                     <span class="text-sm text-slate-700 dark:text-slate-200">
