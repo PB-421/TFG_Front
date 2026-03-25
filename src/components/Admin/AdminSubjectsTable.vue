@@ -141,7 +141,7 @@ onMounted(fetchData)
       </div>
 
       <div v-if="loading" class="flex flex-col items-center py-20">
-        <div class="animate-spin size-10 border-4 border-[#0090e4] border-t-transparent rounded-full mb-4"></div>
+        <div class="animate-spin size-10 border-4 border-[#e4002b] border-t-transparent rounded-full mb-4"></div>
         <p class="text-slate-500 animate-pulse">Cargando asignaturas...</p>
       </div>
 

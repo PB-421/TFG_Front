@@ -89,21 +89,21 @@ const cards = [
   {
     name: 'Grupos',
     icon: 'groups',
-    path: '/admin/grupos',
+    path: '/admin/groups',
     color: 'text-emerald-600 bg-emerald-50 dark:bg-emerald-900/30',
     get count(){ return groups.value.length }
   },
   {
     name: 'Localizaciones',
     icon: 'location_on',
-    path: '/admin/localizaciones',
+    path: '/admin/locations',
     color: 'text-amber-600 bg-amber-50 dark:bg-amber-900/30',
     get count(){ return locations.value.length }
   },
   {
     name: 'Horarios',
     icon: 'schedule',
-    path: '/admin/horarios',
+    path: '/admin/schedules',
     color: 'text-pink-600 bg-pink-50 dark:bg-pink-900/30',
     get count(){ return schedules.value.length }
   }
@@ -123,8 +123,8 @@ const cards = [
       </div>
 
       <div v-if="loading" class="flex flex-col items-center py-20">
-        <div class="animate-spin size-10 border-4 border-[#0090e4] border-t-transparent rounded-full mb-4"></div>
-        <p class="text-slate-500 animate-pulse">Cargando estadísticas...</p>
+        <div class="animate-spin size-10 border-4 border-[#e4002b] border-t-transparent rounded-full mb-4"></div>
+        <p class="text-slate-500 animate-pulse">Cargando dashboard...</p>
       </div>
 
       <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

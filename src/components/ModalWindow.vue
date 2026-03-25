@@ -319,7 +319,13 @@ function close() {
             </div>
             <h3 class="text-xl font-bold text-slate-800 dark:text-white mb-2">¿Estás completamente seguro?</h3>
             <p class="text-slate-500 dark:text-slate-400 text-sm max-w-300px">
-              Esta acción eliminará permanentemente el registro de <strong>{{ props.item?.name || 'este elemento' }}</strong>. No podrás deshacer este cambio.
+
+              Esta acción eliminará permanentemente el registro de <strong>{{ 
+                  props.type === 'user' ? 'Usuarios' : 
+                  props.type === 'subject' ? 'Asignaturas' : 
+                  props.type === 'location' ? 'Ubicaciones' : 
+                  props.type === 'schedule' ? 'Horarios' : 'Grupos' 
+                }}</strong>. No podrás deshacer este cambio.
             </p>
           </div>
         </div>
