@@ -35,6 +35,9 @@ const groupId = ref('')
 const locationId = ref('')
 const startDate = ref('')
 const endDate = ref('')
+const scheduleDate = ref('')
+const startTime = ref('')
+const endTime = ref('')
 
 // Error handling simple
 const showError = ref(false)
@@ -92,10 +95,12 @@ const hasChanges = computed(() => {
   }
   
   if (props.type === 'schedule') {
+    const currentStart = `${scheduleDate.value}T${startTime.value}`
+    const currentEnd = `${scheduleDate.value}T${endTime.value}`
     return groupId.value !== (props.item.groupId || '') ||
-           locationId.value !== (props.item.locationId || '') ||
-           startDate.value !== formatToDateTimeLocal(props.item.startDate) ||
-           endDate.value !== formatToDateTimeLocal(props.item.endDate)
+          locationId.value !== (props.item.locationId || '') ||
+          currentStart !== formatToDateTimeLocal(props.item.startDate) ||
+          currentEnd !== formatToDateTimeLocal(props.item.endDate)
   }
 
   return name.value !== (props.item.name || '')
@@ -118,15 +123,32 @@ watch(() => props.item, (value) => {
   } else if (props.type === 'schedule') {
     groupId.value = value.groupId || ''
     locationId.value = value.locationId || ''
-    startDate.value = formatToDateTimeLocal(value.startDate)
-    endDate.value = formatToDateTimeLocal(value.endDate)
+    
+    // Al usar una constante, TypeScript "estrecha" el tipo tras el if
+    const sDate = value.startDate
+    const eDate = value.endDate
+
+    if (typeof sDate === 'string' && typeof eDate === 'string') {
+      const start = new Date(sDate)
+      const end = new Date(eDate)
+      
+      // Verificamos que la fecha sea válida antes de usar toISOString
+      if (!isNaN(start.getTime()) && !isNaN(end.getTime())) {
+        // Extraer YYYY-MM-DD
+        scheduleDate.value = start.toISOString().split('T')[0]!
+        // Extraer HH:mm
+        startTime.value = start.toTimeString().slice(0, 5)
+        endTime.value = end.toTimeString().slice(0, 5)
+      }
+    }
   }
 })
 
 function resetForm() {
   name.value = ''; email.value = ''; password.value = ''; role.value = 'student'
   subjectId.value = ''; teacherId.value = ''; capacity.value = 0
-  groupId.value = ''; locationId.value = ''; startDate.value = ''; endDate.value = ''
+  groupId.value = ''; locationId.value = ''; startDate.value = ''; endDate.value = '';
+  scheduleDate.value = ''; startTime.value = ''; endTime.value = ''
   showError.value = false
 }
 
@@ -140,7 +162,7 @@ const isFormInvalid = computed(() => {
 
   // Validaciones según el tipo en modo CREATE
   if (props.type === 'schedule') {
-    return !groupId.value || !locationId.value || !startDate.value || !endDate.value
+    return !groupId.value || !locationId.value || !scheduleDate.value || !startTime.value || !endTime.value
   }
   if (props.type === 'user') {
     return !name.value || !email.value || !password.value || !role.value
@@ -168,7 +190,12 @@ function submit() {
 
   let payload: any = {}
   if (props.type === 'schedule') {
-    payload = { groupId: groupId.value, locationId: locationId.value, startDate: startDate.value, endDate: endDate.value }
+    payload = { 
+      groupId: groupId.value, 
+      locationId: locationId.value, 
+      startDate: `${scheduleDate.value}T${startTime.value}`, 
+      endDate: `${scheduleDate.value}T${endTime.value}` 
+    }
   } else {
     payload.name = name.value
     if (props.type === 'user') {
@@ -253,14 +280,19 @@ function close() {
                 </div>
               </div>
 
+              <div>
+                <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Fecha de la Práctica</label>
+                <input type="date" v-model="scheduleDate" class="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all dark:text-white" />
+              </div>
+
               <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Fecha de Inicio</label>
-                  <input type="datetime-local" v-model="startDate" class="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all dark:text-white" />
+                  <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Hora Inicio</label>
+                  <input type="time" v-model="startTime" class="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all dark:text-white" />
                 </div>
                 <div>
-                  <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Fecha de Fin</label>
-                  <input type="datetime-local" v-model="endDate" class="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all dark:text-white" />
+                  <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Hora Fin</label>
+                  <input type="time" v-model="endTime" class="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all dark:text-white" />
                 </div>
               </div>
             </template>

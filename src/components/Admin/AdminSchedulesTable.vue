@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import ModalWindow from '@/components/ModalWindow.vue'
 
 const API_URL = import.meta.env.VITE_API_URL
@@ -21,6 +21,8 @@ const schedules = ref<Schedule[]>([])
 const groups = ref<SimpleEntity[]>([])
 const locations = ref<SimpleEntity[]>([])
 const loading = ref(true)
+const searchQuery = ref('')
+const searchDate = ref('')
 
 const modalOpen = ref(false)
 const modalMode = ref<'create' | 'edit' | 'delete'>('create')
@@ -138,6 +140,24 @@ const alert = ref({
   type: 'success' as 'success' | 'error'
 })
 
+const filteredSchedules = computed(() => {
+  return schedules.value.filter(item => {
+    // 1. Filtro por nombre de grupo
+    const groupName = item.group?.name || getGroupName(item.groupId)
+    const matchesName = groupName.toLowerCase().includes(searchQuery.value.toLowerCase())
+
+    // 2. Filtro por fecha (YYYY-MM-DD)
+    // Si no hay fecha seleccionada, pasa el filtro
+    let matchesDate = true
+    if (searchDate.value) {
+      const itemDate = new Date(item.startDate).toISOString().split('T')[0]
+      matchesDate = itemDate === searchDate.value
+    }
+
+    return matchesName && matchesDate
+  })
+})
+
 const showAlert = (message: string, type: 'success' | 'error' = 'success') => {
   alert.value = { show: true, message, type }
   
@@ -170,13 +190,43 @@ onMounted(fetchData)
       </button>
     </div>
 
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 bg-slate-50 dark:bg-slate-800/50 p-4 rounded-xl border border-slate-200 dark:border-slate-800">
+      <div class="relative">
+        <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">s</span>
+        <input 
+          v-model="searchQuery"
+          type="text" 
+          placeholder="Buscar por grupo..." 
+          class="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
+        />
+      </div>
+      
+      <div class="relative">
+        <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">c</span>
+        <input 
+          v-model="searchDate"
+          type="date" 
+          class="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
+        />
+        <button v-if="searchDate" @click="searchDate = ''" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-red-500">
+          <span class="material-symbols-outlined text-sm">close</span>
+        </button>
+      </div>
+    </div>
+
     <div v-if="loading" class="flex flex-col items-center py-20">
       <div class="animate-spin size-10 border-4 border-[#e4002b] border-t-transparent rounded-full mb-4"></div>
       <p class="text-slate-500 animate-pulse">Cargando horarios...</p>
     </div>
 
+    <div v-if="filteredSchedules.length === 0 && !loading" class="text-center py-12 border-2 border-dashed border-slate-200 rounded-xl">
+      <span class="material-symbols-outlined text-4xl text-slate-300">search_off</span>
+      <p class="text-slate-500 mt-2">No se encontraron horarios con esos filtros.</p>
+      <button @click="searchQuery = ''; searchDate = ''" class="text-[#0090e4] text-sm font-medium mt-1 hover:underline">Limpiar filtros</button>
+    </div>
+
     <div v-else class="space-y-4">
-      <div v-for="item in schedules" :key="item.id" 
+      <div v-for="item in filteredSchedules" :key="item.id" 
            class="group relative flex items-center bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg overflow-hidden hover:border-indigo-300 transition-all">
         
         <div class="w-1.5 self-stretch bg-[#e4002b]"></div>

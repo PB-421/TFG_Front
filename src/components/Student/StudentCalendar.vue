@@ -127,12 +127,16 @@ async function fetchStudentSchedules() {
 
 // Helper para encontrar sesiones en un día específico
 const getSessionsForDay = (day: number) => {
-  return schedules.value.filter(s => {
-    const d = new Date(s.startDate)
-    return d.getDate() === day && 
-           d.getMonth() === currentDate.value.getMonth() && 
-           d.getFullYear() === currentDate.value.getFullYear()
-  })
+  return schedules.value
+    .filter(s => {
+      const d = new Date(s.startDate)
+      return d.getDate() === day && 
+             d.getMonth() === currentDate.value.getMonth() && 
+             d.getFullYear() === currentDate.value.getFullYear()
+    })
+    .sort((a, b) => {
+      return new Date(a.startDate).getTime() - new Date(b.startDate).getTime()
+    })
 }
 
 const formatTime = (dateStr: string) => {
@@ -155,82 +159,72 @@ onMounted(fetchStudentSchedules)
           {{ monthNames[currentDate.getMonth()] }} {{ currentDate.getFullYear() }}
         </p>
       </div>
-      
       <div class="flex gap-2">
-        <button 
-          @click="changeMonth(-1)"
-          class="p-2 flex items-center justify-center rounded-full
-                border border-slate-800 text-slate-800
-                transition-all duration-300
-                hover:bg-slate-800 hover:text-white hover:border-white">
+        <button @click="changeMonth(-1)" class="p-2 flex items-center justify-center rounded-full border border-slate-800 text-slate-800 transition-all duration-300 hover:bg-slate-800 hover:text-white hover:border-white">
           <span class="material-symbols-outlined">chevron_left</span>
         </button>
-
-        <button 
-          @click="changeMonth(1)"
-          class="p-2 flex items-center justify-center rounded-full
-                border border-slate-800 text-slate-800
-                transition-all duration-300
-                hover:bg-slate-800 hover:text-white hover:border-white">
+        <button @click="changeMonth(1)" class="p-2 flex items-center justify-center rounded-full border border-slate-800 text-slate-800 transition-all duration-300 hover:bg-slate-800 hover:text-white hover:border-white">
           <span class="material-symbols-outlined">chevron_right</span>
-        </button>
+        </button> 
       </div>
     </div>
 
     <div v-if="loading" class="flex flex-col items-center py-20">
       <div class="animate-spin size-10 border-4 border-[#e4002b] border-t-transparent rounded-full mb-4"></div>
-      <p class="text-slate-500 animate-pulse">Sincronizando sesiones...</p>
+      <p class="text-slate-500 animate-pulse">Sincronizando...</p>
     </div>
 
-    <div v-else class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden shadow-sm">
-      <div class="grid grid-cols-7 bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-800">
-        <div v-for="d in ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom']" :key="d" 
-             class="py-3 text-center text-[10px] font-bold text-slate-400 uppercase tracking-tighter">
-          {{ d }}
-        </div>
+    <div v-else class="bg-white dark:bg-slate-900 border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+      <div class="grid grid-cols-7 bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200">
+        <div v-for="d in ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom']" :key="d" class="py-3 text-center text-[10px] font-bold text-slate-400 uppercase">{{ d }}</div>
       </div>
 
       <div class="grid grid-cols-7">
-        <div v-for="p in daysInMonth.padding" :key="'p'+p" class="h-32 border-b border-r border-slate-100 dark:border-slate-800 bg-slate-50/30"></div>
+        <div v-for="p in daysInMonth.padding" :key="'p'+p" class="h-32 border-b border-r border-slate-100 bg-slate-50/30"></div>
 
         <div v-for="day in daysInMonth.days" :key="day" 
-             class="h-32 border-b border-r border-slate-100 dark:border-slate-800 relative group transition-colors hover:bg-slate-50/50 dark:hover:bg-slate-800/30">
+            class="h-32 border-b border-r border-slate-100 relative group transition-colors hover:bg-slate-50/50">
           
           <span class="absolute top-3 left-4 text-sm font-medium text-slate-400">{{ day }}</span>
 
           <div v-if="getSessionsForDay(day).length > 0" class="mt-10 px-2">
-            <div v-for="session in getSessionsForDay(day)" :key="session.id"
-                 class="bg-[#e4002b]/10 border-l-2 border-[#e4002b] px-2 py-1 mb-1 cursor-help">
-              
-              <p class="text-[10px] font-bold text-[#e4002b] truncate uppercase">
-                {{ getSubjectName(session.group?.subjectId) }}
-              </p>
-              
-              <div class="invisible group-hover:visible absolute z-50 left-full ml-2 top-0 w-64 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl p-4 rounded-lg pointer-events-none">
-                <div class="flex items-center gap-2 mb-2">
-                  <span class="w-2 h-2 rounded-full bg-[#e4002b]"></span>
-                  <span class="text-xs font-bold uppercase tracking-tight">{{ getSubjectName(session.group?.subjectId) }}</span>
-                </div>
-                <div class="space-y-2">
+            <div v-for="session in getSessionsForDay(day).slice(0, 2)" :key="session.id" class="bg-[#e4002b]/10 border-l-2 border-[#e4002b] px-2 py-0.5 mb-1">
+              <p class="text-[9px] font-bold text-[#e4002b] truncate uppercase">{{ getSubjectName(session.group?.subjectId) }}</p>
+            </div>
+            <p v-if="getSessionsForDay(day).length > 2" class="text-[8px] text-slate-400 font-bold ml-1">+ {{ getSessionsForDay(day).length - 2 }} más</p>
+          </div>
+
+          <div v-if="getSessionsForDay(day).length > 0" 
+              class="custom-tooltip absolute z-50 left-1/2 -translate-x-1/2 bottom-full mb-2 w-72 bg-white dark:bg-slate-900 border border-slate-200 shadow-2xl p-4 rounded-xl transition-all duration-200 opacity-0 invisible group-hover:opacity-100 group-hover:visible">
+            
+            <div class="flex items-center justify-between mb-4 border-b border-slate-100 pb-2">
+              <span class="text-xs font-black uppercase text-slate-400">Día {{ day }}</span>
+              <span class="bg-slate-100 dark:bg-slate-800 text-slate-600 px-2 py-0.5 rounded text-[10px] font-bold">{{ getSessionsForDay(day).length }} sesiones</span>
+            </div>
+
+            <div class="space-y-4 max-h-60 overflow-y-auto pr-2 custom-scrollbar">
+              <div v-for="session in getSessionsForDay(day)" :key="'detail-'+session.id" class="relative pl-3 border-l-2 border-[#e4002b]">
+                <h4 class="text-xs font-bold text-slate-800 dark:text-white uppercase leading-tight">
+                  {{ getSubjectName(session.group?.subjectId) }}
+                </h4>
+                
+                <p class="text-[10px] text-[#e4002b] font-medium mt-0.5 italic">
+                  Grupo: {{ session.group?.name || 'N/A' }}
+                </p>
+
+                <div class="mt-2 grid grid-cols-2 gap-2">
                   <div class="flex flex-col">
-                    <span class="text-[10px] text-slate-400 font-bold uppercase">Grupo</span>
-                    <span class="text-sm text-slate-700 dark:text-slate-200">{{ session.group?.name }}</span>
+                    <span class="text-[9px] text-slate-400 font-bold uppercase">Hora</span>
+                    <span class="text-[11px] text-slate-600 dark:text-slate-300">{{ formatTime(session.startDate) }} - {{ formatTime(session.endDate) }}</span>
                   </div>
                   <div class="flex flex-col">
-                    <span class="text-[10px] text-slate-400 font-bold uppercase">Horario</span>
-                    <span class="text-sm text-slate-700 dark:text-slate-200">
-                      {{ formatTime(session.startDate) }} - {{ formatTime(session.endDate) }}
-                    </span>
-                  </div>
-                  <div class="flex flex-col">
-                    <span class="text-[10px] text-slate-400 font-bold uppercase">Ubicación</span>
-                    <span class="text-sm text-slate-700 dark:text-slate-200">
-                      {{ session.location?.name || 'Aula no asignada' }}
-                    </span>
+                    <span class="text-[9px] text-slate-400 font-bold uppercase">Aula</span>
+                    <span class="text-[11px] text-slate-600 dark:text-slate-300 truncate">{{ session.location?.name || 'N/A' }}</span>
                   </div>
                 </div>
               </div>
             </div>
+            <div class="tooltip-arrow"></div>
           </div>
         </div>
       </div>
@@ -239,7 +233,46 @@ onMounted(fetchStudentSchedules)
 </template>
 
 <style scoped>
-.material-symbols-outlined {
-  font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24;
+.material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24; }
+
+/* Estilo para que el tooltip no desaparezca de golpe y permita el scroll */
+.custom-tooltip {
+  /* Al quitar el mouse, espera 0.1s antes de volverse invisible */
+  transition: opacity 0.2s ease, visibility 0.2s;
+  transition-delay: 0.1s; 
+  pointer-events: auto; /* Permite hacer clic y scroll dentro */
+}
+
+/* Cuando el padre tiene hover, el tooltip aparece sin delay */
+.group:hover .custom-tooltip {
+  transition-delay: 0s;
+}
+
+/* Scrollbar estética */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 4px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 10px;
+}
+
+/* Triangulito inferior del modal */
+.tooltip-arrow {
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 8px solid transparent;
+  border-right: 8px solid transparent;
+  border-top: 8px solid white;
+}
+:deep(.dark) .tooltip-arrow {
+  border-top-color: #0f172a;
 }
 </style>
