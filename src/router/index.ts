@@ -13,6 +13,7 @@ import AdminLocationsTable from '@/components/Admin/AdminLocationsTable.vue'
 import AdminSchedulesTable from '@/components/Admin/AdminSchedulesTable.vue'
 import StudentCalendar from '@/components/Student/StudentCalendar.vue'
 import StudentSubjectSelection from '@/components/Student/StudentSubjectSelection.vue'
+import StudentRequests from '@/components/Student/StudentRequests.vue'
 
 const routes = [
   { 
@@ -47,6 +48,7 @@ const routes = [
     children: [
       { path: '', component: StudentCalendar },
       { path: 'subjectCatalog', component: StudentSubjectSelection },
+      { path: 'requests', component: StudentRequests}
     ]
   },
 

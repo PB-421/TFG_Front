@@ -26,7 +26,8 @@ const linksByRole = {
 
   student: [
     { name: 'Calendario', path: '/student' },
-    { name: 'Catalogo de asignaturas', path: '/student/subjectCatalog' }
+    { name: 'Catalogo de asignaturas', path: '/student/subjectCatalog' },
+    { name: 'Peticiones de cambio', path: '/student/requests' }
   ]
 }
 
