@@ -144,7 +144,6 @@
       
       // Configuración del método
       let method = 'POST'
-      if (modalMode.value === 'edit') method = 'PUT'
       if (modalMode.value === 'delete') method = 'DELETE'
 
       const res = await fetch(url, {

@@ -2,6 +2,8 @@
 import { ref, computed, watch } from 'vue'
 import { createClient } from '@supabase/supabase-js'
 
+const API_URL = import.meta.env.VITE_API_URL
+
 const props = defineProps<{
   show: boolean
   mode: 'create' | 'edit' | 'delete'
@@ -9,7 +11,7 @@ const props = defineProps<{
   studentId: string
   availableGroups: any[] 
   studentGroups: any[]    
-  subjects: any[] // <--- Nueva prop necesaria
+  subjects: any[] 
 }>()
 
 const emit = defineEmits(['close', 'submit'])
@@ -27,25 +29,46 @@ const studentComment = ref('')
 const file = ref<File | null>(null)
 const uploading = ref(false)
 
+// 1. Cambiamos el texto del motivo
 const reasons = [
-  { label: 'Interno', value: 10 },
+  { label: 'Preferencia Personal', value: 10 },
   { label: 'Externo (Justificado)', value: 60 }
 ]
 
 // --- HELPERS ---
-
-// Busca el nombre de la asignatura por su ID
 function getSubjectName(subjectId: string) {
   const subject = props.subjects.find(s => s.id === subjectId)
   return subject ? subject.name : 'Asignatura desconocida'
 }
 
-// Manejador del archivo (para que el input funcione)
 function onFileSelected(e: Event) {
   const target = e.target as HTMLInputElement
   if (target.files && target.files[0]) {
     file.value = target.files[0]
   }
+}
+
+async function fetchUserSession() {
+  try {
+    const response = await fetch(`${API_URL}/api/profiles/GetSession`,{credentials: 'include'});
+    if (!response.ok) throw new Error('No autorizado');
+    
+    const sessionData = await response.json(); 
+    return sessionData;
+  } catch (error) {
+    console.error("Error obteniendo sesión:", error);
+    return null;
+  }
+}
+
+async function authenticateSupabase(session: {
+  accessToken: string,
+  refreshToken: string
+}) {
+  await supabase.auth.setSession({
+    access_token: session.accessToken,
+    refresh_token: session.refreshToken
+  })
 }
 
 // --- LÓGICA DE FILTRADO ---
@@ -55,7 +78,6 @@ const filteredGroups = computed(() => {
   const selectedOriginGroup = props.studentGroups.find(g => g.id === originGroupId.value)
   if (!selectedOriginGroup) return []
 
-  // Filtramos los grupos disponibles que coincidan con la asignatura del origen
   return props.availableGroups.filter(g => g.subjectId === selectedOriginGroup.subjectId)
 })
 
@@ -63,33 +85,66 @@ watch(originGroupId, () => {
   destinationGroupId.value = ''
 })
 
+// 2. Ajustamos la validación del formulario
 const isFormInvalid = computed(() => {
-  if (props.mode === 'delete') return false
-  const basic = !originGroupId.value || !destinationGroupId.value || !weight.value
-  const needsFile = weight.value === 60 && !file.value && props.mode === 'create'
-  return basic || needsFile
+  if (props.mode === 'delete') return false;
+
+  // Faltan los campos básicos
+  if (!originGroupId.value || !destinationGroupId.value || !weight.value) {
+    return true;
+  }
+
+  // Lógica si el motivo es "Externo (Justificado)"
+  if (weight.value === 60) {
+    const isCommentEmpty = studentComment.value.trim() === '';
+    const isFileMissing = props.mode === 'create' && !file.value;
+    
+    if (isCommentEmpty || isFileMissing) {
+      return true;
+    }
+  }
+
+  // Si pasa todo lo anterior, el formulario es válido
+  return false;
 })
 
 async function uploadToSupabase(): Promise<string> {
   if (!file.value) return ''
-  const currentFile = file.value
+
   uploading.value = true
-  
+
   try {
+    const session = await fetchUserSession()
+    if (!session) throw new Error('No autenticado')
+
+    await authenticateSupabase({
+      accessToken: session.accessToken,
+      refreshToken: session.refreshToken
+    })
+
+    const { data: userData, error: userError } = await supabase.auth.getUser()
+
+    if (userError || !userData.user) {
+      throw new Error('Usuario no válido en Supabase')
+    }
+
+    const userId = userData.user.id
+    const currentFile = file.value
     const fileExt = currentFile.name.split('.').pop()
-    const fileName = `${props.studentId}/${Date.now()}.${fileExt}`
-    
-    const { data, error: uploadError } = await supabase.storage
-      .from('requests-documents')
+    const fileName = `${userId}/${Date.now()}.${fileExt}`
+
+    const { data, error } = await supabase.storage
+      .from('RequestsPdfs')
       .upload(fileName, currentFile, { upsert: true })
 
-    if (uploadError) throw uploadError
+    if (error) throw error
 
     const { data: { publicUrl } } = supabase.storage
-      .from('requests-documents')
+      .from('RequestsPdfs')
       .getPublicUrl(data.path)
 
     return publicUrl
+
   } catch (error: any) {
     console.error('Error storage:', error.message)
     throw error
@@ -108,13 +163,14 @@ watch(() => props.show, (newVal) => {
 })
 
 async function handleSubmit() {
-
   try {
     if (props.mode === 'delete') {
       emit('submit', null)
       return
     }
+    
     let pdfUrl = props.item?.pdfPath || ''
+    // Solo subimos si es Externo (60) y hay un archivo nuevo
     if (weight.value === 60 && file.value) {
       pdfUrl = await uploadToSupabase()
     }
@@ -125,13 +181,14 @@ async function handleSubmit() {
       destinationGroupId: destinationGroupId.value,
       weight: weight.value,
       studentComment: studentComment.value,
-      pdfPath: pdfUrl,
+      // Si es Preferencia personal (10), enviamos string vacío para no arrastrar PDFs viejos
+      pdfPath: weight.value === 60 ? pdfUrl : '',
       status: 0 
     }
     emit('submit', payload)
-    close() // Limpiamos al terminar
+    close() 
   } catch (e) {
-    alert("Error al procesar el archivo.")
+    alert("Error al procesar el archivo. "+e)
   }
 }
 
@@ -167,6 +224,7 @@ function close() {
             <p class="text-slate-600 dark:text-slate-300">¿Estás seguro de que deseas eliminar esta petición de cambio?</p>
             <p class="text-xs text-slate-400 mt-2 italic">Esta acción no se puede deshacer.</p>
           </div>
+          
           <template v-else>
             <div>
               <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Asignatura a cambiar (Origen)*</label>
@@ -203,8 +261,10 @@ function close() {
             </div>
 
             <div>
-              <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Comentario (Opcional)</label>
-              <textarea v-model="studentComment" rows="2" class="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-lg px-4 py-3 text-sm dark:text-white outline-none focus:border-slate-400" placeholder="Explica brevemente tu situación..."></textarea>
+              <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">
+                Comentario {{ weight === 60 ? '*' : '(Opcional)' }}
+              </label>
+              <textarea v-model="studentComment" rows="2" class="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-lg px-4 py-3 text-sm dark:text-white outline-none focus:border-slate-400" :placeholder="weight === 60 ? 'Obligatorio: Explica tu justificación médica, laboral, etc...' : 'Explica brevemente tu situación...'"></textarea>
             </div>
 
             <div v-if="weight === 60" class="animate-fade-in">
@@ -226,11 +286,12 @@ function close() {
 
         <div class="px-8 py-8 flex gap-3">
           <button @click="close" class="flex-1 px-6 py-3 text-sm font-bold text-slate-500 hover:bg-slate-100 rounded-lg transition-all">Cancelar</button>
+          
           <button 
             @click="handleSubmit" 
-            :disabled="(!isFormInvalid && mode !== 'delete') || uploading"
+            :disabled="isFormInvalid || uploading"
             :class="mode === 'delete' ? 'bg-red-600 hover:bg-red-700' : 'bg-[#262626] hover:bg-black'"
-            class="flex-1 px-6 py-3 text-white rounded-lg text-sm font-bold disabled:opacity-30 transition-all"
+            class="flex-1 px-6 py-3 text-white rounded-lg text-sm font-bold disabled:opacity-30 disabled:cursor-not-allowed transition-all"
           >
             <span v-if="uploading">Procesando...</span>
             <span v-else-if="mode === 'delete'">Eliminar</span>
