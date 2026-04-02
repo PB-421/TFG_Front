@@ -6,7 +6,7 @@ const API_URL = import.meta.env.VITE_API_URL
 
 const props = defineProps<{
   show: boolean
-  mode: 'create' | 'edit' | 'delete'
+  mode: 'create' | 'delete'
   item: any
   studentId: string
   availableGroups: any[] 
@@ -71,7 +71,6 @@ async function authenticateSupabase(session: {
   })
 }
 
-// --- LÓGICA DE FILTRADO ---
 const filteredGroups = computed(() => {
   if (!originGroupId.value) return []
   
@@ -85,16 +84,14 @@ watch(originGroupId, () => {
   destinationGroupId.value = ''
 })
 
-// 2. Ajustamos la validación del formulario
 const isFormInvalid = computed(() => {
   if (props.mode === 'delete') return false;
 
-  // Faltan los campos básicos
   if (!originGroupId.value || !destinationGroupId.value || !weight.value) {
     return true;
   }
 
-  // Lógica si el motivo es "Externo (Justificado)"
+  // Lógica si el motivo es "Externo"
   if (weight.value === 60) {
     const isCommentEmpty = studentComment.value.trim() === '';
     const isFileMissing = props.mode === 'create' && !file.value;
@@ -103,8 +100,6 @@ const isFormInvalid = computed(() => {
       return true;
     }
   }
-
-  // Si pasa todo lo anterior, el formulario es válido
   return false;
 })
 
@@ -165,7 +160,7 @@ watch(() => props.show, (newVal) => {
 async function handleSubmit() {
   try {
     if (props.mode === 'delete') {
-      emit('submit', null)
+      emit('submit', props.item.id)
       return
     }
     

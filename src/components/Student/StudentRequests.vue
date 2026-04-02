@@ -41,7 +41,7 @@
   const subjects = ref<Subject[]>([])
   const loading = ref(true)
   const modalOpen = ref(false)
-  const modalMode = ref<'create' | 'edit' | 'delete'>('create')
+  const modalMode = ref<'create' | 'delete'>('create')
   const selectedRequest = ref<RequestDto | null>(null)
 
   const studentProfile = ref<Profile | null>(null)
