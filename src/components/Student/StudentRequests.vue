@@ -1,6 +1,7 @@
 <script setup lang="ts">
   import { ref, onMounted } from 'vue'
   import RequestWindow from './StudentRequestWindow.vue'
+  import CommentWindow from '../CommentWindow.vue'
   import { useAuthStore } from '@/stores/auth.store'
 
   const API_URL = import.meta.env.VITE_API_URL
@@ -43,6 +44,8 @@
   const modalOpen = ref(false)
   const modalMode = ref<'create' | 'delete'>('create')
   const selectedRequest = ref<RequestDto | null>(null)
+  const commentModalOpen = ref(false)
+  const selectedTeacherComment = ref('')
 
   const studentProfile = ref<Profile | null>(null)
   const studentGroups = ref<Group[]>([]) 
@@ -67,6 +70,11 @@
 
   const closeAlert = () => {
     alert.value.show = false
+  }
+
+  const openCommentModal = (comment: string) => {
+  selectedTeacherComment.value = comment
+  commentModalOpen.value = true
   }
 
   // --- Lógica de Carga ---
@@ -233,11 +241,21 @@
           </div>
 
           <div class="md:col-span-2 flex justify-end gap-2">
+
+            <button 
+              v-if="req.teacherComment" 
+              @click="openCommentModal(req.teacherComment)"
+              class="p-2 text-slate-200 hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded-full transition-all"
+              title="Ver comentario del profesor"
+            >
+              <span class="material-symbols-outlined">comm</span>
+            </button>
+
             <button v-if="req.status === 0" @click="openDelete(req)" class="p-2 text-slate-300 hover:text-red-500 transition-colors">
-              <span class="material-symbols-outlined">delete_forever</span>
+              <span class="material-symbols-outlined">del</span>
             </button>
             <a v-if="req.pdfPath" :href="req.pdfPath" target="_blank" class="p-2 text-slate-400 hover:text-red-500 transition-colors">
-              <span class="material-symbols-outlined">picture_as_pdf</span>
+              <span class="material-symbols-outlined">pdf</span>
             </a>
           </div>
         </div>
@@ -258,6 +276,12 @@
       :student-groups="studentGroups"
       :subjects="subjects"  @close="modalOpen = false"
       @submit="handleRequestSubmit"
+    />
+
+    <CommentWindow 
+      :show="commentModalOpen" 
+      :comment="selectedTeacherComment" 
+      @close="commentModalOpen = false" 
     />
 
     <Transition
