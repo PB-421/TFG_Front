@@ -5,6 +5,7 @@ import { useAuthStore } from '@/stores/auth.store'
 const API_URL = import.meta.env.VITE_API_URL
 const auth = useAuthStore()
 
+// Interfaces actualizadas según tu DTO
 interface Subject {
   id: string
   name: string
@@ -14,6 +15,7 @@ interface Group {
   id: string
   name: string
   subjectId: string
+  teacherId: string // Añadido según tu GroupsDto
 }
 
 interface Schedule {
@@ -42,14 +44,12 @@ const schedules = ref<Schedule[]>([])
 const loading = ref(true)
 const currentDate = ref(new Date())
 
-// Lógica del Calendario
+// Lógica del Calendario (Se mantiene igual)
 const daysInMonth = computed(() => {
   const year = currentDate.value.getFullYear()
   const month = currentDate.value.getMonth()
   const firstDay = new Date(year, month, 1).getDay()
   const days = new Date(year, month + 1, 0).getDate()
-  
-  // Ajuste para que lunes sea el primer día (opcional, aquí estándar)
   const padding = firstDay === 0 ? 6 : firstDay - 1 
   return { padding, days, month, year }
 })
@@ -60,70 +60,73 @@ const monthNames = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
 
 const getSubjectName = (id?: string) => subjects.value.find(s => s.id === id)?.name || id || 'Sin asignar'
 
-async function fetchStudentSchedules() {
+// --- Lógica Principal de Carga para Profesor ---
+async function fetchTeacherSchedules() {
   loading.value = true;
   const userId = await auth.isMicrosoftUser();
+  
   try {
+    // 1. Obtenemos perfil y todas las asignaturas
     const [resProfile, resAllSubjects] = await Promise.all([
       fetch(`${API_URL}/api/profiles/GetUser?id=${userId}`, { credentials: 'include' }),
       fetch(`${API_URL}/api/subjects`, { credentials: 'include' })
     ]);
 
     if (!resProfile.ok) throw new Error('Usuario no encontrado');
-    if(resAllSubjects) subjects.value = await resAllSubjects.json()
-    const data:Promise<Profile> = await resProfile.json()
-    const resGroups = await fetch(`${API_URL}/api/groups/student/${(await data).id}`, { credentials: 'include' });
+    if (resAllSubjects.ok) subjects.value = await resAllSubjects.json();
+    
+    const profileData: Profile = await resProfile.json();
+    const teacherId = profileData.id;
+
+    // 2. Obtenemos los grupos. 
+    // Nota: Aquí asumo que existe un endpoint /api/groups/teacher/{id} 
+    // o que filtramos la lista general por teacherId.
+    const resGroups = await fetch(`${API_URL}/api/groups`, { credentials: 'include' });
     if (!resGroups.ok) throw new Error("Error cargando grupos");
-    const groups: Group[] = await resGroups.json();
-    const groupSubjectRelation: MapSubjects[] = groups.map(g => ({
+    
+    const allGroups: Group[] = await resGroups.json();
+    
+    // Filtramos los grupos donde el usuario actual es el profesor
+    const teacherGroups = allGroups.filter(g => g.teacherId === teacherId);
+
+    const groupSubjectRelation: MapSubjects[] = teacherGroups.map(g => ({
       GroupId: g.id,
       SubjectId: g.subjectId
-    }))
-    const groupIds = groups.map(g => g.id);
-    console.log("grupos del estudiante: "+groupIds)
+    }));
+
+    const groupIds = teacherGroups.map(g => g.id);
 
     if (groupIds.length === 0) {
       schedules.value = [];
       return;
     }
 
-    // 2. Hacemos una petición por cada groupId
+    // 3. Obtenemos horarios de esos grupos específicos
     const fetches = groupIds.map(id =>
       fetch(`${API_URL}/api/schedules/group/${id}`, { credentials: 'include' })
-        .then(res => {
-          if (!res.ok) throw new Error(`Error cargando schedules para grupo ${id}`);
-          return res.json() as Promise<Schedule[]>;
-        })
-        .catch(err => {
-          console.error(err);
-          return [] as Schedule[];
-        })
+        .then(res => res.ok ? (res.json() as Promise<Schedule[]>) : [])
+        .catch(() => [] as Schedule[])
     );
 
     const schedulesPerGroup = await Promise.all(fetches);
     const allSchedules = schedulesPerGroup.flat();
-    schedules.value = allSchedules;
-    // Crear mapa para búsquedas rápidas
-    const relationMap = new Map(
-      groupSubjectRelation.map(r => [r.GroupId, r.SubjectId])
-    );
 
-    schedules.value = schedules.value.map(s => {
+    // 4. Mapeo de IDs de asignatura para la visualización
+    const relationMap = new Map(groupSubjectRelation.map(r => [r.GroupId, r.SubjectId]));
+
+    schedules.value = allSchedules.map(s => {
       const subjectId = relationMap.get(s.group.id);
-      if (subjectId) {
-        s.group.subjectId = subjectId;
-      }
+      if (subjectId) s.group.subjectId = subjectId;
       return s;
     });
 
   } catch (error) {
-    console.error("Error cargando calendario:", error);
+    console.error("Error cargando calendario docente:", error);
   } finally {
     loading.value = false;
   }
 }
 
-// Helper para encontrar sesiones en un día específico
 const getSessionsForDay = (day: number) => {
   return schedules.value
     .filter(s => {
@@ -132,9 +135,7 @@ const getSessionsForDay = (day: number) => {
              d.getMonth() === currentDate.value.getMonth() && 
              d.getFullYear() === currentDate.value.getFullYear()
     })
-    .sort((a, b) => {
-      return new Date(a.startDate).getTime() - new Date(b.startDate).getTime()
-    })
+    .sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime())
 }
 
 const formatTime = (dateStr: string) => {
@@ -145,7 +146,7 @@ const changeMonth = (offset: number) => {
   currentDate.value = new Date(currentDate.value.setMonth(currentDate.value.getMonth() + offset))
 }
 
-onMounted(fetchStudentSchedules)
+onMounted(fetchTeacherSchedules)
 </script>
 
 <template>
@@ -197,7 +198,7 @@ onMounted(fetchStudentSchedules)
             
             <div class="flex items-center justify-between mb-4 border-b border-slate-100 pb-2">
               <span class="text-xs font-black uppercase text-slate-400">Día {{ day }}</span>
-              <span class="bg-slate-100 dark:bg-slate-800 text-slate-600 px-2 py-0.5 rounded text-[10px] font-bold">{{ getSessionsForDay(day).length }} sesiones</span>
+              <span class="bg-slate-100 dark:bg-slate-800 text-slate-600 px-2 py-0.5 rounded text-[10px] font-bold">{{ getSessionsForDay(day).length }} clases</span>
             </div>
 
             <div class="space-y-4 max-h-60 overflow-y-auto pr-2 custom-scrollbar">
@@ -233,20 +234,16 @@ onMounted(fetchStudentSchedules)
 <style scoped>
 .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24; }
 
-/* Estilo para que el tooltip no desaparezca de golpe y permita el scroll */
 .custom-tooltip {
-  /* Al quitar el mouse, espera 0.1s antes de volverse invisible */
   transition: opacity 0.2s ease, visibility 0.2s;
   transition-delay: 0.1s; 
-  pointer-events: auto; /* Permite hacer clic y scroll dentro */
+  pointer-events: auto;
 }
 
-/* Cuando el padre tiene hover, el tooltip aparece sin delay */
 .group:hover .custom-tooltip {
   transition-delay: 0s;
 }
 
-/* Scrollbar estética */
 .custom-scrollbar::-webkit-scrollbar {
   width: 4px;
 }
@@ -258,7 +255,6 @@ onMounted(fetchStudentSchedules)
   border-radius: 10px;
 }
 
-/* Triangulito inferior del modal */
 .tooltip-arrow {
   position: absolute;
   top: 100%;

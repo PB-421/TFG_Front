@@ -3,8 +3,7 @@ import { useAuthStore } from '@/stores/auth.store'
 
 import LoginView from '@/views/LoginView.vue'
 import DashboardView from '@/views/DashboardView.vue'
-import AdminView from '@/views/AdminView.vue'
-import StudentView from '@/views/StudentView.vue'
+import GeneralView from '@/views/GeneralView.vue'
 import AdminProfilesTable from '@/components/Admin/AdminProfilesTable.vue'
 import AdminDashboard from '@/components/Admin/AdminDashboard.vue'
 import AdminSubjectsTable from '@/components/Admin/AdminSubjectsTable.vue'
@@ -14,6 +13,7 @@ import AdminSchedulesTable from '@/components/Admin/AdminSchedulesTable.vue'
 import StudentCalendar from '@/components/Student/StudentCalendar.vue'
 import StudentSubjectSelection from '@/components/Student/StudentSubjectSelection.vue'
 import StudentRequests from '@/components/Student/StudentRequests.vue'
+import TeacherCalendar from '@/components/Teacher/TeacherCalendar.vue'
 
 const routes = [
   { 
@@ -29,7 +29,7 @@ const routes = [
 
   {
     path: '/admin',
-    component: AdminView,
+    component: GeneralView,
     meta: { auth: true, role: 'admin' },
     children: [
       { path: '', component: AdminDashboard },
@@ -42,8 +42,19 @@ const routes = [
   },
 
   {
+    path: '/teacher',
+    component: GeneralView,
+    meta: { auth: true, role: 'teacher' },
+    children: [
+      { path: '', component: TeacherCalendar },
+      { path: 'subjectCatalog', component: StudentSubjectSelection },
+      { path: 'requests', component: StudentRequests}
+    ]
+  },
+
+  {
     path: '/student',
-    component: StudentView,
+    component: GeneralView,
     meta: { auth: true, role: 'student' },
     children: [
       { path: '', component: StudentCalendar },

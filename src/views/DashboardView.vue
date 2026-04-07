@@ -8,11 +8,13 @@ const router = useRouter()
 
 onMounted(() => {
   if (auth.role === 'admin') {
-    router.push('/admin')     // ruta para admin
+    router.push('/admin')  
   } else if (auth.role === 'student') {
-    router.push('/student')   // ruta para estudiante
-  } else {
-    router.push('/login')     // por si no hay rol
+    router.push('/student') 
+  } else if (auth.role === 'teacher') {
+    router.push('/teacher')
+  }else {
+    router.push('/login')    
   }
 })
 
