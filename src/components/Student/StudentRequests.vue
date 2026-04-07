@@ -187,7 +187,7 @@
   <div class="max-w-6xl mx-auto p-6 space-y-6">
     <div class="flex justify-between items-center border-b border-slate-200 pb-6">
       <div>
-        <h1 class="text-3xl font-light text-slate-800 dark:text-white">Mis Peticiones de Cambio</h1>
+        <h1 class="text-3xl font-light text-slate-900 dark:text-slate-900">Peticiones de Cambio</h1>
         <p class="text-slate-400 text-sm">Gestiona tus solicitudes de cambio de grupo</p>
       </div>
       <button @click="modalMode = 'create'; modalOpen = true" class="bg-[#262626] hover:bg-black text-white px-6 py-2.5 rounded font-medium text-sm flex items-center gap-2 transition-all">

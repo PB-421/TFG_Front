@@ -20,7 +20,8 @@ const linksByRole = {
   ],
 
   teacher: [
-    { name: 'Calendario', path: '/teacher' }
+    { name: 'Calendario', path: '/teacher' },
+    { name: 'Grupos', path: '/teacher/groups'}
   ],
 
   student: [

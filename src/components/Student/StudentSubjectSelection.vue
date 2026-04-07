@@ -104,7 +104,7 @@ onMounted(fetchData)
   <div class="max-w-6xl mx-auto p-6 space-y-6">
     <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-200 pb-6">
       <div>
-        <h1 class="text-3xl font-light text-slate-800 dark:text-white">Mis Asignaturas</h1>
+        <h1 class="text-3xl font-light text-slate-900 dark:text-slate-900">Mis Asignaturas</h1>
         <p class="text-slate-500 text-sm mt-1">Selecciona las asignaturas que vas a cursar este trimestre.</p>
       </div>
       <button 

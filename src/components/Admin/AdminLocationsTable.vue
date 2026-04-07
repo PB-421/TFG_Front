@@ -128,7 +128,7 @@ onMounted(fetchData)
     <div class="max-w-6xl mx-auto p-6 space-y-6">
       <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-200 pb-6">
         <div>
-          <h1 class="text-3xl font-light text-slate-800 dark:text-white">Gestión de Ubicaciones</h1>
+          <h1 class="text-3xl font-light text-slate-900 dark:text-slate-900">Gestión de Ubicaciones</h1>
         </div>
         <button @click="openCreate" class="flex items-center gap-2 bg-[#262626] hover:bg-black text-white px-6 py-2.5 rounded shadow-sm transition-all font-medium text-sm">
           <span class="material-symbols-outlined text-sm">+</span>

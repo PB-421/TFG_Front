@@ -135,8 +135,7 @@ onMounted(fetchData)
       
       <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-200 pb-6">
         <div>
-          <h1 class="text-3xl font-light text-slate-800 dark:text-white">Gestión de Usuarios</h1>
-          <p class="text-slate-500 text-sm mt-1">Directorio de cuentas y permisos</p>
+          <h1 class="text-3xl font-light text-slate-900 dark:text-slate-900">Gestión de Usuarios</h1>
         </div>
         <button @click="openCreate" class="flex items-center gap-2 bg-[#262626] hover:bg-black text-white px-6 py-2.5 rounded shadow-sm transition-all font-medium text-sm">
           <span class="material-symbols-outlined text-sm">+</span>

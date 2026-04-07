@@ -29,7 +29,6 @@ const studentComment = ref('')
 const file = ref<File | null>(null)
 const uploading = ref(false)
 
-// 1. Cambiamos el texto del motivo
 const reasons = [
   { label: 'Preferencia Personal', value: 10 },
   { label: 'Externo (Justificado)', value: 60 }
@@ -48,101 +47,38 @@ function onFileSelected(e: Event) {
   }
 }
 
-async function fetchUserSession() {
-  try {
-    const response = await fetch(`${API_URL}/api/profiles/GetSession`,{credentials: 'include'});
-    if (!response.ok) throw new Error('No autorizado');
-    
-    const sessionData = await response.json(); 
-    return sessionData;
-  } catch (error) {
-    console.error("Error obteniendo sesión:", error);
-    return null;
-  }
-}
-
-async function authenticateSupabase(session: {
-  accessToken: string,
-  refreshToken: string
-}) {
-  await supabase.auth.setSession({
-    access_token: session.accessToken,
-    refresh_token: session.refreshToken
-  })
-}
-
 const filteredGroups = computed(() => {
   if (!originGroupId.value) return []
-  
   const selectedOriginGroup = props.studentGroups.find(g => g.id === originGroupId.value)
   if (!selectedOriginGroup) return []
-
   return props.availableGroups.filter(g => g.subjectId === selectedOriginGroup.subjectId)
-})
-
-watch(originGroupId, () => {
-  destinationGroupId.value = ''
 })
 
 const isFormInvalid = computed(() => {
   if (props.mode === 'delete') return false;
-
-  if (!originGroupId.value || !destinationGroupId.value || !weight.value) {
-    return true;
-  }
-
-  // Lógica si el motivo es "Externo"
+  if (!originGroupId.value || !destinationGroupId.value || !weight.value) return true;
   if (weight.value === 60) {
-    const isCommentEmpty = studentComment.value.trim() === '';
-    const isFileMissing = props.mode === 'create' && !file.value;
-    
-    if (isCommentEmpty || isFileMissing) {
-      return true;
-    }
+    if (studentComment.value.trim() === '' || (!file.value && props.mode === 'create')) return true;
   }
   return false;
 })
 
+// --- LÓGICA SUPABASE ---
 async function uploadToSupabase(): Promise<string> {
   if (!file.value) return ''
-
   uploading.value = true
-
   try {
-    const session = await fetchUserSession()
-    if (!session) throw new Error('No autenticado')
-
-    await authenticateSupabase({
-      accessToken: session.accessToken,
-      refreshToken: session.refreshToken
-    })
-
-    const { data: userData, error: userError } = await supabase.auth.getUser()
-
-    if (userError || !userData.user) {
-      throw new Error('Usuario no válido en Supabase')
-    }
-
-    const userId = userData.user.id
-    const currentFile = file.value
-    const fileExt = currentFile.name.split('.').pop()
-    const fileName = `${userId}/${Date.now()}.${fileExt}`
-
-    const { data, error } = await supabase.storage
-      .from('RequestsPdfs')
-      .upload(fileName, currentFile, { upsert: true })
-
+    const res = await fetch(`${API_URL}/api/profiles/GetSession`,{credentials: 'include'});
+    const session = await res.json();
+    await supabase.auth.setSession({ access_token: session.accessToken, refresh_token: session.refreshToken })
+    
+    const { data: userData } = await supabase.auth.getUser()
+    const fileName = `${userData.user?.id}/${Date.now()}.${file.value.name.split('.').pop()}`
+    const { data, error } = await supabase.storage.from('RequestsPdfs').upload(fileName, file.value)
     if (error) throw error
 
-    const { data: { publicUrl } } = supabase.storage
-      .from('RequestsPdfs')
-      .getPublicUrl(data.path)
-
+    const { data: { publicUrl } } = supabase.storage.from('RequestsPdfs').getPublicUrl(data.path)
     return publicUrl
-
-  } catch (error: any) {
-    console.error('Error storage:', error.message)
-    throw error
   } finally {
     uploading.value = false
   }
@@ -154,146 +90,169 @@ watch(() => props.show, (newVal) => {
     destinationGroupId.value = props.item.destinationGroupId
     weight.value = props.item.weight
     studentComment.value = props.item.studentComment
+  } else if (newVal) {
+    originGroupId.value = ''; destinationGroupId.value = ''; weight.value = 10; studentComment.value = ''; file.value = null;
   }
 })
 
 async function handleSubmit() {
   try {
-    if (props.mode === 'delete') {
-      emit('submit', props.item.id)
-      return
-    }
-    
+    if (props.mode === 'delete') { emit('submit', props.item.id); return; }
     let pdfUrl = props.item?.pdfPath || ''
-    // Solo subimos si es Externo (60) y hay un archivo nuevo
-    if (weight.value === 60 && file.value) {
-      pdfUrl = await uploadToSupabase()
-    }
-
-    const payload = {
+    if (weight.value === 60 && file.value) pdfUrl = await uploadToSupabase()
+    
+    emit('submit', {
       studentId: props.studentId,
       originGroupId: originGroupId.value,
       destinationGroupId: destinationGroupId.value,
       weight: weight.value,
       studentComment: studentComment.value,
-      // Si es Preferencia personal (10), enviamos string vacío para no arrastrar PDFs viejos
       pdfPath: weight.value === 60 ? pdfUrl : '',
       status: 0 
-    }
-    emit('submit', payload)
+    })
     close() 
-  } catch (e) {
-    alert("Error al procesar el archivo. "+e)
-  }
+  } catch (e) { alert("Error: " + e) }
 }
 
-function close() {
-  originGroupId.value = ''
-  destinationGroupId.value = ''
-  studentComment.value = ''
-  file.value = null
-  emit('close')
-}
+function close() { emit('close') }
 </script>
 
 <template>
-  <Transition enter-active-class="ease-out duration-300" enter-from-class="opacity-0" enter-to-class="opacity-100" leave-active-class="ease-in duration-200" leave-from-class="opacity-100" leave-to-class="opacity-0">
+  <Transition
+    enter-active-class="ease-out duration-300"
+    enter-from-class="opacity-0"
+    enter-to-class="opacity-100"
+    leave-active-class="ease-in duration-200"
+    leave-from-class="opacity-100"
+    leave-to-class="opacity-0"
+  >
     <div v-if="show" class="fixed inset-0 z-150 flex items-center justify-center p-4">
       <div class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm" @click="close"></div>
 
-      <div class="relative bg-white dark:bg-slate-900 w-full max-w-lg rounded-xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden">
-        <div class="px-8 pt-8 pb-4 flex items-center justify-between">
-          <h2 class="text-2xl font-light text-slate-800 dark:text-white uppercase">
-            {{ mode === 'create' ? 'Nueva' : 'Eliminar' }} <span class="font-bold text-[#e4002b]">Petición</span>
-          </h2>
-          <button @click="close" class="text-slate-400 hover:text-slate-600">
+      <div class="relative bg-white dark:bg-slate-900 w-full max-w-3xl rounded-xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden transform transition-all">
+        
+        <div class="px-8 pt-8 pb-4 flex items-center justify-between border-b border-slate-100 dark:border-slate-800">
+          <div>
+            <h2 class="text-xl font-light text-slate-800 dark:text-white uppercase tracking-tight">
+              {{ mode === 'create' ? 'Nueva' : 'Eliminar' }} <span class="font-bold text-[#e4002b]">Petición</span>
+            </h2>
+            <p class="text-slate-400 text-[10px] mt-1 font-black tracking-widest uppercase">
+              Proceso de solicitud de cambio de grupo
+            </p>
+          </div>
+          <button @click="close" class="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors">
             <span class="material-symbols-outlined">close</span>
           </button>
         </div>
 
-        <div class="px-8 py-4 space-y-5">
-          <div v-if="mode === 'delete'" class="py-4 text-center">
-            <div class="size-16 bg-red-50 dark:bg-red-900/20 rounded-full flex items-center justify-center mx-auto mb-4">
-              <span class="material-symbols-outlined text-red-500 text-3xl">warning</span>
+        <div class="p-8">
+          <div v-if="mode === 'delete'" class="py-12 text-center">
+            <div class="size-20 bg-red-50 dark:bg-red-900/20 rounded-full flex items-center justify-center mx-auto mb-6">
+              <span class="material-symbols-outlined text-red-500 text-4xl">warning</span>
             </div>
-            <p class="text-slate-600 dark:text-slate-300">¿Estás seguro de que deseas eliminar esta petición de cambio?</p>
-            <p class="text-xs text-slate-400 mt-2 italic">Esta acción no se puede deshacer.</p>
+            <h3 class="text-lg font-bold text-slate-800 dark:text-white uppercase tracking-tight">¿Confirmar eliminación?</h3>
+            <p class="text-slate-500 dark:text-slate-400 text-sm mt-2">Esta acción borrará permanentemente la solicitud seleccionada.</p>
           </div>
-          
-          <template v-else>
-            <div>
-              <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Asignatura a cambiar (Origen)*</label>
-              <select v-model="originGroupId" class="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-lg px-4 py-3 text-sm dark:text-white outline-none">
-                <option value="" disabled>Selecciona tu asignatura actual</option>
-                <option v-for="g in studentGroups" :key="g.id" :value="g.id">
-                  {{ getSubjectName(g.subjectId) }} — (Grupo {{ g.name }})
-                </option>
-              </select>
-            </div>
 
-            <div :class="{ 'opacity-50 pointer-events-none': !originGroupId }">
-              <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Nuevo Grupo Destino*</label>
-              <select v-model="destinationGroupId" class="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-lg px-4 py-3 text-sm dark:text-white outline-none focus:border-[#e4002b]">
-                <option value="" disabled>{{ originGroupId ? 'Selecciona el nuevo grupo' : 'Primero elige asignatura' }}</option>
-                <option v-for="g in filteredGroups" :key="g.id" :value="g.id">
-                  Grupo {{ g.name }}
-                </option>
-              </select>
-              <p v-if="originGroupId && filteredGroups.length === 0" class="text-[10px] text-red-500 mt-2 font-bold italic">
-                No hay otros grupos disponibles para esta asignatura en este momento.
-              </p>
-            </div>
+          <div v-else class="grid grid-cols-1 md:grid-cols-2 gap-10">
+            
+            <div class="flex flex-col space-y-6">
+              <div>
+                <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 ml-1">
+                  1. Configuración del Cambio
+                </label>
+                
+                <div class="space-y-4">
+                  <div>
+                    <span class="text-[9px] font-bold text-slate-400 uppercase ml-1">Asignatura Origen</span>
+                    <select v-model="originGroupId" class="mt-1 w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-lg px-4 py-3 text-xs dark:text-white outline-none focus:border-red-400 transition-all">
+                      <option value="" disabled>Selecciona tu grupo actual</option>
+                      <option v-for="g in studentGroups" :key="g.id" :value="g.id">
+                        {{ getSubjectName(g.subjectId) }} — (G. {{ g.name }})
+                      </option>
+                    </select>
+                  </div>
 
-            <div>
-              <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Motivo del Cambio*</label>
-              <div class="grid grid-cols-2 gap-3">
-                <button v-for="r in reasons" :key="r.value" @click="weight = r.value"
-                  :class="weight === r.value ? 'border-[#e4002b] bg-red-50 dark:bg-red-900/10 text-[#e4002b]' : 'border-slate-200 dark:border-slate-700 text-slate-500'"
-                  class="px-4 py-3 border rounded-lg text-xs font-bold transition-all uppercase">
-                  {{ r.label }}
-                </button>
+                  <div :class="{ 'opacity-40 pointer-events-none': !originGroupId }">
+                    <span class="text-[9px] font-bold text-slate-400 uppercase ml-1">Grupo Destino Sugerido</span>
+                    <select v-model="destinationGroupId" class="mt-1 w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-lg px-4 py-3 text-xs dark:text-white outline-none focus:border-red-400 transition-all">
+                      <option value="" disabled>{{ originGroupId ? 'Selecciona el nuevo grupo' : 'Espera...' }}</option>
+                      <option v-for="g in filteredGroups" :key="g.id" :value="g.id">Grupo {{ g.name }}</option>
+                    </select>
+                    <p v-if="originGroupId && filteredGroups.length === 0" class="text-[10px] text-red-500 mt-2 font-bold italic px-1 leading-tight">
+                      No hay otros grupos disponibles para esta asignatura.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div v-if="originGroupId && destinationGroupId" class="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-dashed border-slate-200 dark:border-slate-700">
+                <div class="flex items-start gap-3 text-slate-600 dark:text-slate-400">
+                  <span class="material-symbols-outlined text-xl text-[#e4002b]">info</span>
+                  <p class="text-[11px] leading-snug">
+                    Solicitando traslado de <span class="font-bold text-slate-800 dark:text-white">{{ studentGroups.find(g => g.id === originGroupId)?.name }}</span> a 
+                    <span class="font-bold text-slate-800 dark:text-white">{{ filteredGroups.find(g => g.id === destinationGroupId)?.name }}</span>.
+                  </p>
+                </div>
               </div>
             </div>
 
-            <div>
-              <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">
-                Comentario {{ weight === 60 ? '*' : '(Opcional)' }}
-              </label>
-              <textarea v-model="studentComment" rows="2" class="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-lg px-4 py-3 text-sm dark:text-white outline-none focus:border-slate-400" :placeholder="weight === 60 ? 'Obligatorio: Explica tu justificación médica, laboral, etc...' : 'Explica brevemente tu situación...'"></textarea>
-            </div>
+            <div class="flex flex-col space-y-5">
+              <div>
+                <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 ml-1">
+                  2. Justificación
+                </label>
+                
+                <div class="flex gap-2 mb-4">
+                  <button v-for="r in reasons" :key="r.value" @click="weight = r.value"
+                    :class="weight === r.value ? 'border-[#e4002b] bg-red-50 dark:bg-red-900/20 text-[#e4002b]' : 'border-slate-200 dark:border-slate-700 text-slate-400 hover:bg-slate-50'"
+                    class="flex-1 px-3 py-2.5 border rounded-lg text-[10px] font-black transition-all uppercase tracking-tighter">
+                    {{ r.label }}
+                  </button>
+                </div>
 
-            <div v-if="weight === 60" class="animate-fade-in">
-              <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Justificante PDF*</label>
-              <div class="flex items-center justify-center w-full">
-                <label class="flex flex-col items-center justify-center w-full h-24 border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-lg cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
-                  <div class="flex flex-col items-center justify-center">
-                    <span class="material-symbols-outlined text-slate-400 mb-1">upload_file</span>
-                    <p class="text-[11px] text-slate-500 text-center px-4">
-                      {{ file ? file.name : 'Haz clic para subir el justificante' }}
+                <textarea v-model="studentComment" rows="3" 
+                  class="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-lg px-4 py-3 text-xs dark:text-white outline-none focus:border-slate-400 transition-all resize-none" 
+                  :placeholder="weight === 60 ? 'Describe tu situación laboral/médica de forma detallada...' : 'Comentario opcional...'"></textarea>
+              </div>
+
+              <div v-if="weight === 60" class="animate-fade-in">
+                <span class="text-[9px] font-bold text-slate-400 uppercase ml-1">Justificante (PDF)</span>
+                <label class="mt-1 flex flex-col items-center justify-center w-full h-28 border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-xl cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all group">
+                  <div class="flex flex-col items-center justify-center pt-2">
+                    <span class="material-symbols-outlined text-slate-400 group-hover:text-red-400 mb-1">cloud_upload</span>
+                    <p class="text-[10px] text-slate-500 font-medium px-4 text-center leading-tight">
+                      {{ file ? file.name : 'Haz clic para adjuntar documento acreditativo' }}
                     </p>
                   </div>
                   <input type="file" class="hidden" accept="application/pdf" @change="onFileSelected" />
                 </label>
               </div>
             </div>
-          </template>
+
+          </div>
         </div>
 
-        <div class="px-8 py-8 flex gap-3">
-          <button @click="close" class="flex-1 px-6 py-3 text-sm font-bold text-slate-500 hover:bg-slate-100 rounded-lg transition-all">Cancelar</button>
-          
+        <div class="px-8 py-6 bg-slate-50 dark:bg-slate-900/80 border-t border-slate-100 dark:border-slate-800 flex items-center justify-end gap-3">
+          <button @click="close" class="px-6 py-2.5 rounded-lg text-xs font-black uppercase text-slate-400 hover:text-slate-600 transition-all">
+            Cancelar
+          </button>
           <button 
             @click="handleSubmit" 
             :disabled="isFormInvalid || uploading"
             :class="mode === 'delete' ? 'bg-red-600 hover:bg-red-700' : 'bg-[#262626] hover:bg-black'"
-            class="flex-1 px-6 py-3 text-white rounded-lg text-sm font-bold disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+            class="disabled:opacity-20 disabled:grayscale text-white px-8 py-2.5 rounded-lg text-xs font-black uppercase shadow-lg transition-all active:scale-95 flex items-center gap-2"
           >
-            <span v-if="uploading">Procesando...</span>
-            <span v-else-if="mode === 'delete'">Eliminar</span>
-            <span v-else>Enviar Petición</span>
+            <span class="material-symbols-outlined text-sm">{{ mode === 'delete' ? 'delete' : 'send' }}</span>
+            {{ uploading ? 'Subiendo...' : (mode === 'delete' ? 'Confirmar Eliminación' : 'Enviar Solicitud') }}
           </button>
         </div>
       </div>
     </div>
   </Transition>
 </template>
+
+<style scoped>
+.animate-fade-in { animation: fadeIn 0.3s ease-out; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+</style>
