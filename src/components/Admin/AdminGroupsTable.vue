@@ -20,6 +20,7 @@ const groups = ref<Group[]>([])
 const subjects = ref<SimpleEntity[]>([])
 const teachers = ref<SimpleEntity[]>([])
 const loading = ref(true)
+const isSubmitting = ref(false)
 
 const modalOpen = ref(false)
 const modalMode = ref<'create' | 'edit' | 'delete'>('create')
@@ -75,6 +76,7 @@ function openDelete(group: Group) {
 async function handleSubmit(data: any) {
   const headers = { 'Content-Type': 'application/json' }
   let response;
+  isSubmitting.value = true;
   try {
     if (modalMode.value === 'create') {
       response = await fetch(`${API_URL}/api/groups`, {
@@ -123,6 +125,8 @@ async function handleSubmit(data: any) {
     }
   } catch (error) {
     console.error("Error en la operación:", error)
+  } finally {
+     isSubmitting.value = false;
   }
 }
 
@@ -221,6 +225,7 @@ onMounted(fetchData)
       :item="selectedGroup"
       :subjects="subjects" 
       :teachers="teachers"
+      :loading="isSubmitting"
       type="group"
       @close="modalOpen = false"
       @submit="handleSubmit"

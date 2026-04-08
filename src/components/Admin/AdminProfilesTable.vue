@@ -15,6 +15,7 @@ interface Profile {
 
 const profiles = ref<Profile[]>([])
 const loading = ref(true)
+const isSubmitting = ref(false)
 
 const modalOpen = ref(false)
 const modalMode = ref<'create'|'edit'|'delete'>('create')
@@ -52,6 +53,7 @@ async function handleSubmit(data:any){
 
   const userId = await auth.isMicrosoftUser();
   let response;
+  isSubmitting.value = true;
   try{
     if(modalMode.value==='create'){
       response = await fetch(`${API_URL}/api/auth/register?adminId=${userId}`,{
@@ -94,6 +96,8 @@ async function handleSubmit(data:any){
     }
   } catch (error) {
       console.error("Error en la operación:", error)
+  } finally {
+     isSubmitting.value = false;
   }
 }
 
@@ -188,6 +192,7 @@ onMounted(fetchData)
       :show="modalOpen"
       :mode="modalMode"
       :item="selectedUser"
+      :loading="isSubmitting"
       type="user"
       @close="modalOpen = false"
       @submit="handleSubmit"

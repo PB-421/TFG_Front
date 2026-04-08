@@ -10,10 +10,12 @@ const auth = useAuthStore()
 interface Subject {
   id?: string
   name: string
+  course?: number
 }
 
 const subjects = ref<Subject[]>([])
 const loading = ref(true)
+const isSubmitting = ref(false)
 
 const modalOpen = ref(false)
 const modalMode = ref<'create' | 'edit' | 'delete'>('create')
@@ -58,13 +60,15 @@ async function handleSubmit(data: Subject) {
   const headers = { 'Content-Type': 'application/json' }
   let response;
 
+  isSubmitting.value = true;
+
   try {
     if (modalMode.value === 'create') {
       response = await fetch(`${API_URL}/api/subjects?adminId=${userId}`, {
         method: 'POST',
         credentials: 'include',
         headers,
-        body: JSON.stringify({ Name: data.name })
+        body: JSON.stringify({ Name: data.name, Course: data.course })
       })
     }
 
@@ -73,7 +77,7 @@ async function handleSubmit(data: Subject) {
         method: 'PUT',
         credentials: 'include',
         headers,
-        body: JSON.stringify({ Id: selectedSubject.value.id, Name: data.name })
+        body: JSON.stringify({ Id: selectedSubject.value.id, Name: data.name, Course: data.course })
       })
     }
 
@@ -97,6 +101,8 @@ async function handleSubmit(data: Subject) {
     }
   } catch (error) {
     console.error("Error en la operación:", error)
+  } finally {
+     isSubmitting.value = false;
   }
 }
 
@@ -153,11 +159,22 @@ onMounted(fetchData)
 
           <div class="flex-1 grid grid-cols-1 md:grid-cols-12 items-center px-6 py-5 gap-4">
             
-            <div class="md:col-span-8 flex flex-col">
-              <span class="text-xs text-slate-400 font-bold uppercase tracking-tighter">Nombre de la Asignatura</span>
-              <span class="text-lg font-semibold text-slate-800 dark:text-slate-200">
-                {{ subject.name }}
-              </span>
+            <div class="md:col-span-8">
+              <div class="flex flex-col md:flex-row md:items-center md:justify-between">
+                <div class="flex-1">
+                  <span class="text-xs text-slate-400 font-bold uppercase tracking-tighter">Nombre de la Asignatura</span>
+                  <div class="text-lg font-semibold text-slate-800 dark:text-slate-200">
+                    {{ subject.name }}
+                  </div>
+                </div>
+
+                <div class="mt-2 md:mt-0 md:ml-4 text-right">
+                  <span class="text-xs text-slate-400 font-bold uppercase tracking-tighter">Curso</span>
+                  <div class="text-lg font-semibold text-slate-800 dark:text-slate-200">
+                    {{ subject.course }}º
+                  </div>
+                </div>
+              </div>
             </div>
 
             <div class="md:col-span-4 flex justify-end gap-2">
@@ -181,6 +198,7 @@ onMounted(fetchData)
       :show="modalOpen"
       :mode="modalMode"
       :item="selectedSubject"
+      :loading="isSubmitting"
       type="subject"
       @close="modalOpen = false"
       @submit="handleSubmit"

@@ -17,6 +17,7 @@ const props = defineProps<{
   type: 'user' | 'subject' | 'group' | 'location' | 'schedule'
   groups?: SimpleEntity[]
   locations?: SimpleEntity[]
+  loading?: boolean
 }>()
 
 const emit = defineEmits(['close', 'submit'])
@@ -29,6 +30,7 @@ const role = ref('student')
 const subjectId = ref('')
 const teacherId = ref('')
 const capacity = ref<number>(0)
+const course = ref<number>(0)
 
 // Schedule specific fields
 const groupId = ref('')
@@ -91,6 +93,11 @@ const hasChanges = computed(() => {
     return name.value !== (props.item.name || '') ||
            Number(capacity.value) !== (props.item.capacity || 0)
   }
+
+  if (props.type === 'subject') {
+    return name.value !== (props.item.name || '') ||
+           Number(course.value) !== (props.item.course || 0)
+  }
   
   if (props.type === 'schedule') {
     const currentStart = `${scheduleDate.value}T${startTime.value}`
@@ -118,6 +125,8 @@ watch(() => props.item, (value) => {
     teacherId.value = value.teacherId || ''
   } else if (props.type === 'location') {
     capacity.value = value.capacity || 0
+  } else if (props.type === 'subject') {
+    course.value = value.course || 0
   } else if (props.type === 'schedule') {
     groupId.value = value.groupId || ''
     locationId.value = value.locationId || ''
@@ -149,10 +158,12 @@ const isFormInvalid = computed(() => {
   if (props.type === 'user') return !name.value || !email.value || !password.value || !role.value
   if (props.type === 'group') return !name.value || !subjectId.value || !teacherId.value
   if (props.type === 'location') return !name.value || capacity.value <= 0
+  if (props.type === 'subject') return !name.value || course.value <= 0
   return !name.value 
 })
 
 const isButtonDisabled = computed(() => {
+  if (props.loading) return true // Si está cargando, deshabilitar
   if (props.mode === 'delete') return false
   if (props.mode === 'edit' && !hasChanges.value) return true
   return isFormInvalid.value
@@ -179,6 +190,8 @@ function submit() {
       Object.assign(payload, { subjectId: subjectId.value, teacherId: teacherId.value })
     } else if (props.type === 'location') {
       payload.capacity = Number(capacity.value)
+    } else if (props.type === 'subject') {
+      payload.course = Number(course.value)
     }
   }
   emit('submit', payload)
@@ -291,6 +304,13 @@ function close() {
                 2. Parámetros Técnicos
               </label>
 
+              <div v-if="props.type === 'subject'">
+                <span class="text-[9px] font-bold text-slate-400 uppercase ml-1">Año / Curso Escolar</span>
+                <input v-model="course" type="number" min="1" max="5"
+                  class="mt-1 w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-lg px-4 py-3 text-xs outline-none dark:text-white focus:border-red-400 transition-all" 
+                  placeholder="Ej: 1, 2, 3..." />
+              </div>
+
               <template v-if="props.type === 'group'">
                 <div>
                   <span class="text-[9px] font-bold text-slate-400 uppercase ml-1">Asignatura</span>
@@ -351,15 +371,22 @@ function close() {
             @click="submit" 
             :disabled="isButtonDisabled"
             :class="[
-              props.mode === 'delete' ? 'bg-red-600 hover:bg-red-700 shadow-red-200' : 'bg-[#262626] hover:bg-black',
-              isButtonDisabled ? 'opacity-20 grayscale cursor-not-allowed' : 'active:scale-95'
+              props.mode === 'delete' ? 'bg-red-600 hover:bg-red-700' : 'bg-[#262626] hover:bg-black',
+              isButtonDisabled ? 'opacity-50 grayscale cursor-not-allowed' : 'active:scale-95'
             ]"
-            class="text-white px-8 py-2.5 rounded-lg text-xs font-black uppercase shadow-lg transition-all flex items-center gap-2"
+            class="text-white min-w-160px px-8 py-2.5 rounded-lg text-xs font-black uppercase shadow-lg transition-all flex items-center justify-center gap-2"
           >
-            <span class="material-symbols-outlined text-sm">
-              {{ props.mode === 'delete' ? 'delete' : 'save_as' }}
-            </span>
-            {{ props.mode === 'delete' ? 'Confirmar Baja' : 'Guardar Datos' }}
+            <template v-if="props.loading">
+              <span class="material-symbols-outlined text-sm animate-spin">sync</span>
+              <span>Procesando solicitud...</span>
+            </template>
+
+            <template v-else>
+              <span class="material-symbols-outlined text-sm">
+                {{ props.mode === 'delete' ? 'delete' : 'save_as' }}
+              </span>
+              {{ props.mode === 'delete' ? 'Confirmar Baja' : 'Guardar Datos' }}
+            </template>
           </button>
         </div>
       </div>

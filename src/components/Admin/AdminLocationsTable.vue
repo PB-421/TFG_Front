@@ -15,6 +15,7 @@ interface Location {
 
 const locations = ref<Location[]>([])
 const loading = ref(true)
+const isSubmitting = ref(false)
 
 const modalOpen = ref(false)
 const modalMode = ref<'create' | 'edit' | 'delete'>('create')
@@ -57,6 +58,8 @@ async function handleSubmit(data: Location) {
   const headers = { 'Content-Type': 'application/json' }
   let response;
   
+  isSubmitting.value = true;
+
   try {
     if (modalMode.value === 'create') {
       response = await fetch(`${API_URL}/api/locations`, {
@@ -96,6 +99,8 @@ async function handleSubmit(data: Location) {
     }
   } catch (error) {
     console.error("Error en la operación:", error)
+  } finally {
+     isSubmitting.value = false;
   }
 }
 
@@ -184,6 +189,7 @@ onMounted(fetchData)
       :show="modalOpen"
       :mode="modalMode"
       :item="selectedLocation"
+      :loading="isSubmitting"
       type="location"
       @close="modalOpen = false"
       @submit="handleSubmit"

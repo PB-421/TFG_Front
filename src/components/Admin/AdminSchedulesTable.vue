@@ -10,7 +10,6 @@ interface Schedule {
   startDate: string
   endDate: string
   locationId?: string
-  // El DTO del back trae objetos anidados, los mapeamos aquí
   group?: { id: string, name: string }
   location?: { id: string, name: string }
 }
@@ -21,6 +20,7 @@ const schedules = ref<Schedule[]>([])
 const groups = ref<SimpleEntity[]>([])
 const locations = ref<SimpleEntity[]>([])
 const loading = ref(true)
+const isSubmitting = ref(false)
 const searchQuery = ref('')
 const searchDate = ref('')
 
@@ -91,6 +91,8 @@ async function handleSubmit(data: any) {
     Location: { Id: data.locationId } // Enviamos el objeto Location con su ID
   }
 
+  isSubmitting.value = true;
+
   try {
     if (modalMode.value === 'create') {
       response = await fetch(`${API_URL}/api/schedules`, {
@@ -131,6 +133,8 @@ async function handleSubmit(data: any) {
 
   } catch (error) {
     console.error("Error en la operación de horario:", error)
+  } finally {
+    isSubmitting.value = false;
   }
 }
 
@@ -161,7 +165,6 @@ const filteredSchedules = computed(() => {
 const showAlert = (message: string, type: 'success' | 'error' = 'success') => {
   alert.value = { show: true, message, type }
   
-  // Solo cerramos automáticamente si es éxito
   if (type === 'success') {
     setTimeout(() => {
       alert.value.show = false
@@ -278,6 +281,7 @@ onMounted(fetchData)
       :item="selectedSchedule"
       :groups="groups" 
       :locations="locations"
+      :loading="isSubmitting"
       type="schedule"
       @close="modalOpen = false"
       @submit="handleSubmit"
