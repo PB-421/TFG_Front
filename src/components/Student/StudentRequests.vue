@@ -195,8 +195,9 @@
       </button>
     </div>
 
-    <div v-if="loading" class="flex justify-center py-20">
+    <div v-if="loading" class="flex flex-col items-center py-20">
       <div class="animate-spin size-8 border-4 border-[#e4002b] border-t-transparent rounded-full"></div>
+      <p class="text-slate-500 animate-pulse">Cargando peticiones...</p>
     </div>
 
     <div v-else class="space-y-4">
@@ -281,6 +282,7 @@
     <CommentWindow 
       :show="commentModalOpen" 
       :comment="selectedTeacherComment" 
+      :type="2"
       @close="commentModalOpen = false" 
     />
 

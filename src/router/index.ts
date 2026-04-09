@@ -15,6 +15,7 @@ import StudentSubjectSelection from '@/components/Student/StudentSubjectSelectio
 import StudentRequests from '@/components/Student/StudentRequests.vue'
 import TeacherCalendar from '@/components/Teacher/TeacherCalendar.vue'
 import TeacherGroupsTable from '@/components/Teacher/TeacherGroupsTable.vue'
+import TeacherRequests from '@/components/Teacher/TeacherRequests.vue'
 
 const routes = [
   { 
@@ -49,7 +50,7 @@ const routes = [
     children: [
       { path: '', component: TeacherCalendar },
       { path: 'groups', component: TeacherGroupsTable },
-      { path: 'requests', component: StudentRequests}
+      { path: 'requests', component: TeacherRequests}
     ]
   },
 
