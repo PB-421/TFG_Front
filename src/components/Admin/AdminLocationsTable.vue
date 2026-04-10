@@ -6,7 +6,6 @@ import { useAuthStore } from '@/stores/auth.store'
 const API_URL = import.meta.env.VITE_API_URL
 const auth = useAuthStore()
 
-// Adaptado al LocationDto/Modelo de BBDD
 interface Location {
   id?: string
   name: string
@@ -24,7 +23,6 @@ const selectedLocation = ref<Location | null>(null)
 async function fetchData() {
   loading.value = true
   try {
-    // URL actualizada a /api/locations
     const res = await fetch(`${API_URL}/api/locations`, { credentials: 'include' })
     if (res.ok) {
       locations.value = await res.json()

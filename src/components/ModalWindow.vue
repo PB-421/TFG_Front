@@ -41,6 +41,8 @@ const endTime = ref('')
 
 // Error handling simple
 const showError = ref(false)
+const isLocationInUse = ref(false)
+const isCheckingUsage = ref(false)
 
 // Lists for selects
 const teachers = ref<User[]>([])
@@ -111,7 +113,7 @@ const hasChanges = computed(() => {
   return name.value !== (props.item.name || '')
 })
 
-watch(() => props.item, (value) => {
+watch(() => props.item, async (value) => {
   if (!value) {
     resetForm()
     return
@@ -125,6 +127,22 @@ watch(() => props.item, (value) => {
     teacherId.value = value.teacherId || ''
   } else if (props.type === 'location') {
     capacity.value = value.capacity || 0
+    if (props.mode === 'edit' && value.id) {
+      isCheckingUsage.value = true
+      isLocationInUse.value = false
+      try {
+        const res = await fetch(`${API_URL}/api/schedules/hasLocation/${value.id}`, { 
+          credentials: 'include' 
+        })
+        if (res.ok) {
+          isLocationInUse.value = await res.json()
+        }
+      } catch (error) {
+        console.error("Error comprobando uso de ubicación:", error)
+      } finally {
+        isCheckingUsage.value = false
+      }
+    }
   } else if (props.type === 'subject') {
     course.value = value.course || 0
   } else if (props.type === 'schedule') {
@@ -149,6 +167,8 @@ function resetForm() {
   subjectId.value = ''; teacherId.value = ''; capacity.value = 0
   groupId.value = ''; locationId.value = ''; scheduleDate.value = ''; startTime.value = ''; endTime.value = ''
   showError.value = false
+  isLocationInUse.value = false
+  isCheckingUsage.value = false
 }
 
 const isFormInvalid = computed(() => {
@@ -355,9 +375,22 @@ function close() {
               </template>
 
               <div v-if="props.type === 'location'">
-                <span class="text-[9px] font-bold text-slate-400 uppercase ml-1">Aforo Máximo</span>
-                <input v-model="capacity" type="number" 
-                  class="mt-1 w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-lg px-4 py-3 text-xs outline-none dark:text-white focus:border-red-400 transition-all" />
+                  <span class="text-[9px] font-bold text-slate-400 uppercase">Aforo Máximo</span>
+                  <span v-if="isCheckingUsage" class="text-[8px] font-bold text-[#0090e4] animate-pulse uppercase tracking-wider">
+                    Verificando disponibilidad...
+                  </span>
+                <input 
+                  v-model="capacity" 
+                  type="number" 
+                  :hidden="isLocationInUse"
+                  :disabled="isCheckingUsage"
+                  class="mt-1 w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-lg px-4 py-3 text-xs outline-none dark:text-white focus:border-red-400 transition-all disabled:opacity-60 disabled:cursor-not-allowed disabled:bg-slate-100 dark:disabled:bg-slate-800" 
+                />
+                
+                <p v-if="isLocationInUse" class="mt-2 text-[9px] font-black text-orange-500 uppercase tracking-widest flex items-center gap-1">
+                  <span class="material-symbols-outlined text-[12px]">lock</span>
+                  Ubicación en uso. Aforo bloqueado.
+                </p>
               </div>
             </div>
           </div>
