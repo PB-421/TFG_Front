@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import TeacherRequestWindow from './TeacherRequestWindow.vue'
 import { useAuthStore } from '@/stores/auth.store'
 
@@ -122,6 +122,23 @@ const openReview = (req: RequestDto) => {
   modalOpen.value = true
 }
 
+const sortedRequests = computed(() => {
+  // Creamos una copia para no mutar el original con .sort()
+  return [...requests.value].sort((a, b) => {
+    
+    // 1. Ordenar por PESO (Descendente: de mayor a menor)
+    if (b.weight !== a.weight) {
+      return b.weight - a.weight
+    }
+
+    // 2. Ordenar por ASIGNATURA
+    const subjectA = getSubjectByGroupId(a.originGroupId)
+    const subjectB = getSubjectByGroupId(b.originGroupId)
+    
+    return subjectA.localeCompare(subjectB)
+  })
+})
+
 async function handleStatusUpdate(payload: { id: string, status: number, teacherComment: string }) {
   isSubmitting.value = true;
   try {
@@ -171,56 +188,77 @@ onMounted(loadData)
     </div>
 
     <div v-else class="space-y-4">
-      <div v-for="req in requests" :key="req.id" 
+      <div v-for="req in sortedRequests" :key="req.id" 
         class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg flex overflow-hidden group hover:border-slate-300 dark:hover:border-slate-700 transition-all">
+        
         <div :class="getStatusInfo(req.status).color" class="w-1.5"></div>
         
         <div class="flex-1 grid grid-cols-1 md:grid-cols-12 items-center px-6 py-4 gap-4">
           
-          <div class="md:col-span-4">
+          <div class="md:col-span-3">
             <div class="flex flex-col">
               <span class="text-[10px] text-[#e4002b] font-black uppercase tracking-widest mb-1">
                 {{ getSubjectByGroupId(req.originGroupId) }}
               </span>
               <span class="text-[10px] text-slate-400 font-bold uppercase">Estudiante</span>
-              <h3 class="text-sm font-bold text-slate-700 dark:text-white mt-1">
+              <h3 class="text-sm font-bold text-slate-700 dark:text-white mt-0.5 truncate">
                 {{ studentNames[req.studentId] || 'Cargando...' }}
               </h3>
             </div>
           </div>
 
           <div class="md:col-span-3">
-            <div class="flex flex-col">
+            <div class="flex flex-col border-l border-slate-100 dark:border-slate-800 md:pl-4">
               <span class="text-[10px] text-slate-400 font-bold uppercase tracking-tighter">Trayecto de Cambio</span>
               <div class="flex items-center gap-2 mt-1">
-                <span class="text-sm font-bold text-slate-700 dark:text-white">
+                <span class="text-xs font-bold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded">
                   {{ getGroupName(req.originGroupId) }}
                 </span>
-                <span class="material-symbols-outlined text-xs text-slate-400">arrow_forward</span>
-                <span class="text-sm font-bold text-slate-700 dark:text-white">
+                <span class="material-symbols-outlined text-xs text-slate-400">arrow</span>
+                <span class="text-xs font-bold text-white bg-[#262626] px-2 py-0.5 rounded">
                   {{ getGroupName(req.destinationGroupId) }}
                 </span>
               </div>
             </div>
           </div>
 
-          <div class="md:col-span-3">
-             <div class="flex items-center gap-2">
-              <span class="material-symbols-outlined text-lg" :class="getStatusInfo(req.status).color.replace('bg-', 'text-')">
-                {{ getStatusInfo(req.status).icon }}
-              </span>
-              <span class="text-sm font-bold dark:text-white">{{ getStatusInfo(req.status).label }}</span>
+          <div class="md:col-span-2">
+            <div class="flex flex-col">
+              <span class="text-[10px] text-slate-400 font-bold uppercase tracking-tighter">Prioridad</span>
+              <div class="flex items-center gap-1.5 mt-1">
+                <span 
+                  :class="req.weight > 10 
+                    ? 'bg-red-50 text-red-600 dark:bg-red-900/20 dark:text-red-400' 
+                    : 'bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400'"
+                  class="text-[10px] font-black uppercase px-2 py-0.5 rounded shadow-sm"
+                >
+                  {{ req.weight > 10 ? 'Alta' : 'Normal' }}
+                </span>
+              </div>
             </div>
           </div>
 
-          <div class="md:col-span-2 flex justify-end gap-2">
-            <a v-if="req.pdfPath" :href="req.pdfPath" target="_blank" @click.stop class="p-2 text-slate-400 hover:text-red-500 transition-colors" title="Ver documento adjunto">
-              <span class="material-symbols-outlined">pdf</span>
-            </a>
-            <button class="p-2 text-slate-300 hover:text-slate-500 transition-colors " title="Revisar solicitud" @click="openReview(req)">
-              <span class="material-symbols-outlined">revisar</span>
+          <div class="md:col-span-2">
+            <div class="flex flex-col">
+              <span class="text-[10px] text-slate-400 font-bold uppercase tracking-tighter mb-1">Estado actual</span>
+              <div class="flex items-center gap-2">
+                <span class="material-symbols-outlined text-lg" :class="getStatusInfo(req.status).color.replace('bg-', 'text-')">
+                  {{ getStatusInfo(req.status).icon }}
+                </span>
+                <span class="text-xs font-bold dark:text-white uppercase">{{ getStatusInfo(req.status).label }}</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="md:col-span-2 flex justify-end">
+            <button 
+              @click="openReview(req)"
+              class="flex items-center gap-2 bg-slate-900 hover:bg-black text-white px-4 py-2 rounded text-[11px] font-bold uppercase tracking-tight transition-all active:scale-95 shadow-sm"
+            >
+              Gestionar
             </button>
           </div>
+
         </div>
       </div>
 
@@ -228,6 +266,8 @@ onMounted(loadData)
         <p class="text-slate-400 italic">No hay peticiones pendientes de revisión.</p>
       </div>
     </div>
+   
+    
 
     <TeacherRequestWindow 
       :show="modalOpen" 

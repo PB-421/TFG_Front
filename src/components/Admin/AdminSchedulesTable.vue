@@ -23,6 +23,7 @@ const loading = ref(true)
 const isSubmitting = ref(false)
 const searchQuery = ref('')
 const searchDate = ref('')
+const searchLocation = ref('')
 
 const modalOpen = ref(false)
 const modalMode = ref<'create' | 'edit' | 'delete'>('create')
@@ -146,19 +147,20 @@ const alert = ref({
 
 const filteredSchedules = computed(() => {
   return schedules.value.filter(item => {
-    // 1. Filtro por nombre de grupo
+
     const groupName = item.group?.name || getGroupName(item.groupId)
     const matchesName = groupName.toLowerCase().includes(searchQuery.value.toLowerCase())
 
-    // 2. Filtro por fecha (YYYY-MM-DD)
-    // Si no hay fecha seleccionada, pasa el filtro
+    const locationName = item.location?.name || getLocationName(item.locationId)
+    const matchesLocation = locationName.toLowerCase().includes(searchLocation.value.toLowerCase())
+
     let matchesDate = true
     if (searchDate.value) {
       const itemDate = new Date(item.startDate).toISOString().split('T')[0]
       matchesDate = itemDate === searchDate.value
     }
 
-    return matchesName && matchesDate
+    return matchesName && matchesDate && matchesLocation
   })
 })
 
@@ -193,14 +195,24 @@ onMounted(fetchData)
       </button>
     </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 bg-slate-50 dark:bg-slate-800/50 p-4 rounded-xl border border-slate-200 dark:border-slate-800">
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
       <div class="relative">
         <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">s</span>
         <input 
           v-model="searchQuery"
           type="text" 
           placeholder="Buscar por grupo..." 
-          class="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
+          class="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-sm focus:ring-2 focus:ring-[#e4002b] outline-none transition-all"
+        />
+      </div>
+
+      <div class="relative">
+        <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">loc</span>
+        <input 
+          v-model="searchLocation"
+          type="text" 
+          placeholder="Buscar por ubicación..." 
+          class="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-sm focus:ring-2 focus:ring-[#e4002b] outline-none transition-all"
         />
       </div>
       
@@ -209,10 +221,10 @@ onMounted(fetchData)
         <input 
           v-model="searchDate"
           type="date" 
-          class="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
+          class="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-sm focus:ring-2 focus:ring-[#e4002b] outline-none transition-all"
         />
-        <button v-if="searchDate" @click="searchDate = ''" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-red-500">
-          <span class="material-symbols-outlined text-sm">close</span>
+        <button v-if="searchDate" @click="searchDate = ''" class="absolute right-12 top-1/2 -translate-y-1/2 text-slate-400 hover:text-red-500" placeholder="Limpiar filtro">
+          <span class="material-symbols-outlined text-sm">clear</span>
         </button>
       </div>
     </div>
@@ -225,7 +237,7 @@ onMounted(fetchData)
     <div v-if="filteredSchedules.length === 0 && !loading" class="text-center py-12 border-2 border-dashed border-slate-200 rounded-xl">
       <span class="material-symbols-outlined text-4xl text-slate-300">search_off</span>
       <p class="text-slate-500 mt-2">No se encontraron horarios con esos filtros.</p>
-      <button @click="searchQuery = ''; searchDate = ''" class="text-[#0090e4] text-sm font-medium mt-1 hover:underline">Limpiar filtros</button>
+      <button @click="searchQuery = ''; searchDate = ''; searchLocation= ''" class="text-[#0090e4] text-sm font-medium mt-1 hover:underline">Limpiar filtros</button>
     </div>
 
     <div v-else class="space-y-4">

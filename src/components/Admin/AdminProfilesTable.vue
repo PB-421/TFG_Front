@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import ModalWindow from '@/components/ModalWindow.vue' 
 import { useAuthStore } from '@/stores/auth.store'
 
@@ -16,6 +16,9 @@ interface Profile {
 const profiles = ref<Profile[]>([])
 const loading = ref(true)
 const isSubmitting = ref(false)
+const searchQuery = ref('')
+const searchEmail = ref('')
+const searchRole = ref('')
 
 const modalOpen = ref(false)
 const modalMode = ref<'create'|'edit'|'delete'>('create')
@@ -48,6 +51,19 @@ function openDelete(user:Profile){
   selectedUser.value=user
   modalOpen.value=true
 }
+
+const filteredProfiles = computed(() => {
+  return profiles.value.filter(profile => {
+
+    const matchesName = profile.name.toLowerCase().includes(searchQuery.value.toLowerCase())
+    
+    const matchesEmail = profile.email.toLowerCase().includes(searchEmail.value.toLowerCase())
+    
+    const matchesRole = searchRole.value === '' ||  profile.role.toLowerCase() === searchRole.value.toLowerCase()
+
+    return matchesName && matchesEmail && matchesRole
+  })
+})
 
 async function handleSubmit(data:any){
 
@@ -147,13 +163,54 @@ onMounted(fetchData)
         </button>
       </div>
 
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="relative">
+          <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">per</span>
+          <input 
+            v-model="searchQuery"
+            type="text" 
+            placeholder="Buscar por nombre..." 
+            class="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-sm focus:ring-2 focus:ring-[#e4002b] outline-none transition-all"
+          />
+        </div>
+
+        <div class="relative">
+          <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">mail</span>
+          <input 
+            v-model="searchEmail"
+            type="text" 
+            placeholder="Buscar por correo..." 
+            class="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-sm focus:ring-2 focus:ring-[#e4002b] outline-none transition-all"
+          />
+        </div>
+
+        <div class="relative">
+          <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">rol</span>
+          <select 
+            v-model="searchRole"
+            class="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-sm focus:ring-2 focus:ring-[#e4002b] outline-none transition-all appearance-none"
+          >
+            <option value="">Todos los roles</option>
+            <option value="admin">Admin</option>
+            <option value="teacher">Profesor</option>
+            <option value="student">Estudiante</option>
+          </select>
+        </div>
+      </div>
+
       <div v-if="loading" class="flex flex-col items-center py-20">
         <div class="animate-spin size-10 border-4 border-[#e4002b] border-t-transparent rounded-full mb-4"></div>
         <p class="text-slate-500 animate-pulse">Cargando usuarios...</p>
       </div>
 
+      <div v-else-if="filteredProfiles.length === 0" class="text-center py-12 border-2 border-dashed border-slate-200 rounded-xl">
+        <span class="material-symbols-outlined text-4xl text-slate-300">search_off</span>
+        <p class="text-slate-500 mt-2">No se encontraron usuarios con esos filtros.</p>
+        <button @click="searchQuery = ''; searchEmail = ''; searchRole= ''" class="text-[#0090e4] text-sm font-medium mt-1 hover:underline">Limpiar filtros</button>
+      </div>
+
       <div v-else class="space-y-4">
-        <div v-for="profile in profiles" :key="profile.id" 
+        <div v-for="profile in filteredProfiles" :key="profile.id" 
              class="group relative flex items-center bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg overflow-hidden hover:border-indigo-300 transition-all">
           
           <div class="w-1.5 self-stretch bg-[#e4002b]"></div>

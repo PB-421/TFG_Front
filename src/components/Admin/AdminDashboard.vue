@@ -117,7 +117,7 @@ const cards = [
       
       <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-200 pb-6">
         <div>
-          <h1 class="text-3xl font-light text-slate-800 dark:text-white">Panel de Control</h1>
+          <h1 class="text-3xl font-light text-slate-900 dark:text-slate-900">Panel de Control</h1>
           <p class="text-slate-500 text-sm mt-1">Gestión general del sistema</p>
         </div>
       </div>

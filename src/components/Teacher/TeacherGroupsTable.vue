@@ -29,6 +29,8 @@ const groups = ref<Group[]>([])
 const subjects = ref<SimpleEntity[]>([])
 const loading = ref(true)
 const currentTeacherId = ref<string | null>(null)
+const searchQuery = ref('')
+const searchSubject = ref('')
 
 // Modal
 const transferModalOpen = ref(false)
@@ -83,6 +85,19 @@ function openTransfer(group: Group) {
   selectedGroup.value = group
   transferModalOpen.value = true
 }
+
+const filteredGroups = computed(() => {
+  return groups.value.filter(item => {
+
+    const groupsName = item.name
+    const matchesName = groupsName.toLowerCase().includes(searchQuery.value.toLowerCase())
+
+    const subjectsName = getSubjectName(item.subjectId)
+    const matchesSubjects = subjectsName.toLowerCase().includes(searchSubject.value.toLowerCase())
+
+    return matchesName && matchesSubjects
+  })
+})
 
 async function handleTransfer(data: { studentId: string, fromGroupId: string, toGroupId: string }) {
   try {
@@ -144,7 +159,28 @@ onMounted(fetchData)
           <h1 class="text-3xl font-light text-slate-900 dark:text-slate-900">Gestión de Grupos</h1>
           <p class="text-slate-500 text-sm mt-1">Gestione los alumnos de sus grupos</p>
         </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="relative">
+          <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">s</span>
+          <input 
+            v-model="searchQuery"
+            type="text" 
+            placeholder="Buscar por nombre..." 
+            class="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-sm focus:ring-2 focus:ring-[#e4002b] outline-none transition-all"
+          />
         </div>
+        <div class="relative">
+          <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">s</span>
+          <input 
+            v-model="searchSubject"
+            type="text" 
+            placeholder="Buscar por asignatura..." 
+            class="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-sm focus:ring-2 focus:ring-[#e4002b] outline-none transition-all"
+          />
+        </div>
+      </div>
 
       <div v-if="loading" class="flex flex-col items-center py-20">
         <div class="animate-spin size-10 border-4 border-[#e4002b] border-t-transparent rounded-full mb-4"></div>
@@ -155,8 +191,14 @@ onMounted(fetchData)
         <p class="text-slate-500">No tienes grupos asignados</p>
       </div>
 
+      <div v-if="filteredGroups.length === 0 && !loading" class="text-center py-12 border-2 border-dashed border-slate-200 rounded-xl">
+        <span class="material-symbols-outlined text-4xl text-slate-300">search_off</span>
+        <p class="text-slate-500 mt-2">No se encontraron grupos con esos filtros.</p>
+        <button @click="searchQuery = ''; searchSubject=''" class="text-[#0090e4] text-sm font-medium mt-1 hover:underline">Limpiar filtros</button>
+      </div>
+
       <div v-else class="space-y-4">
-        <div v-for="group in myGroups" :key="group.id" 
+        <div v-for="group in filteredGroups" :key="group.id" 
              class="group relative flex items-center bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg overflow-hidden hover:shadow-md transition-all">
           
           <div class="w-1.5 self-stretch bg-[#e4002b]"></div>
@@ -187,10 +229,8 @@ onMounted(fetchData)
             </div>
 
             <div class="md:col-span-2 flex justify-end">
-              <button @click="openTransfer(group)" 
-                      class="flex items-center gap-2 bg-slate-50 hover:bg-slate-100 text-slate-700 px-4 py-2 rounded border border-slate-200 transition-colors text-sm font-medium">
-                <span class="material-symbols-outlined text-lg">sync_alt</span>
-                Gestionar
+              <button @click="openTransfer(group)" class="p-2 text-slate-400 hover:text-[#0090e4] hover:bg-indigo-50 rounded-full transition-colors">
+                <span class="material-symbols-outlined">edit_note</span>
               </button>
             </div>
           </div>

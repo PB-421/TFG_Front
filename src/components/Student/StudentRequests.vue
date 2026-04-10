@@ -1,5 +1,5 @@
 <script setup lang="ts">
-  import { ref, onMounted } from 'vue'
+  import { ref, onMounted, computed } from 'vue'
   import RequestWindow from './StudentRequestWindow.vue'
   import CommentWindow from '../CommentWindow.vue'
   import { useAuthStore } from '@/stores/auth.store'
@@ -76,6 +76,17 @@
   selectedTeacherComment.value = comment
   commentModalOpen.value = true
   }
+
+  const sortedRequests = computed(() => {
+    return [...requests.value].sort((a, b) => {
+
+      if (a.status !== b.status) {
+        return b.status - a.status;
+      }
+      
+      return b.weight - a.weight;
+    });
+  });
 
   // --- Lógica de Carga ---
   async function loadData() {
@@ -201,7 +212,7 @@
     </div>
 
     <div v-else class="space-y-4">
-      <div v-for="req in requests" :key="req.id" class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg flex overflow-hidden group">
+      <div v-for="req in sortedRequests" :key="req.id" class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg flex overflow-hidden group">
         <div :class="getStatusInfo(req.status).color" class="w-1.5"></div>
         
         <div class="flex-1 grid grid-cols-1 md:grid-cols-12 items-center px-6 py-4 gap-4">
