@@ -26,6 +26,7 @@ const loading = ref(true)
 const saving = ref(false)
 const searchQuery = ref('')
 const searchCourse = ref(0)
+const isRegistrationOpen = ref(false)
 
 const alert = ref({
   show: false,
@@ -36,20 +37,25 @@ const alert = ref({
 async function fetchData() {
   loading.value = true
   try {
-    const userId = await auth.isMicrosoftUser(); // Obtenemos el ID del usuario actual
+    const userId = await auth.isMicrosoftUser(); 
     
-    // Cargamos todas las asignaturas disponibles y el perfil del usuario en paralelo
-    const [resAllSubjects, resUser] = await Promise.all([
+    const [resAllSubjects, resUser, resControl] = await Promise.all([
       fetch(`${API_URL}/api/subjects`, { credentials: 'include' }),
-      fetch(`${API_URL}/api/profiles/GetUser?id=${userId}`, { credentials: 'include' })
+      fetch(`${API_URL}/api/profiles/GetUser?id=${userId}`, { credentials: 'include' }),
+      fetch(`${API_URL}/api/control/matriculacion`, { credentials: 'include' }) 
     ])
 
     if (resAllSubjects.ok) allSubjects.value = await resAllSubjects.json()
     if (resUser.ok) {
       userProfile.value = await resUser.json()
-      // Inicializamos los seleccionados con los IDs que ya tiene el alumno
       selectedSubjectIds.value = userProfile.value?.subjects.map(s => s.id) || []
     }
+    
+    if (resControl.ok) {
+      const status = await resControl.json()
+      isRegistrationOpen.value = typeof status === 'boolean' ? status : status.status
+    }
+
   } catch (error) {
     console.error("Error cargando datos:", error)
     showAlert('Error al conectar con el servidor', 'error')
@@ -59,6 +65,8 @@ async function fetchData() {
 }
 
 const toggleSubject = (subjectId: string) => {
+  if (!isRegistrationOpen.value) return 
+
   const index = selectedSubjectIds.value.indexOf(subjectId)
   if (index > -1) {
     selectedSubjectIds.value.splice(index, 1)
@@ -69,17 +77,14 @@ const toggleSubject = (subjectId: string) => {
 
 const filteredSubjects = computed(() => {
   return allSubjects.value.filter(item => {
-
     const matchesName = item.name.toLowerCase().includes(searchQuery.value.toLowerCase())
-
     const matchesCourse = searchCourse.value == 0 || item.course == searchCourse.value
-
     return matchesName && matchesCourse
   })
 })
 
 async function saveChanges() {
-  if (!userProfile.value) return
+  if (!userProfile.value || !isRegistrationOpen.value) return
   
   saving.value = true
   try {
@@ -116,6 +121,20 @@ onMounted(fetchData)
 
 <template>
   <div class="max-w-6xl mx-auto p-6 space-y-6">
+    
+    <div v-if="!loading && !isRegistrationOpen" class="bg-amber-50 border-l-4 border-amber-500 p-4 rounded-md">
+      <div class="flex">
+        <div class="shrink-0">
+          <span class="material-symbols-outlined text-amber-500">info</span>
+        </div>
+        <div class="ml-3">
+          <p class="text-sm text-amber-700">
+            <strong>El periodo de selección de asignaturas está cerrado.</strong> Puedes ver tus asignaturas actuales, pero no realizar modificaciones.
+          </p>
+        </div>
+      </div>
+    </div>
+
     <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-200 pb-6">
       <div>
         <h1 class="text-3xl font-light text-slate-900 dark:text-slate-900">Mis Asignaturas</h1>
@@ -123,8 +142,8 @@ onMounted(fetchData)
       </div>
       <button 
         @click="saveChanges" 
-        :disabled="saving"
-        class="flex items-center gap-2 bg-[#262626] hover:bg-black disabled:bg-slate-400 text-white px-8 py-2.5 rounded shadow-sm transition-all font-medium text-sm"
+        :disabled="saving || !isRegistrationOpen"
+        class="flex items-center gap-2 bg-[#262626] hover:bg-black disabled:bg-slate-400 disabled:cursor-not-allowed text-white px-8 py-2.5 rounded shadow-sm transition-all font-medium text-sm"
       >
         <span v-if="saving" class="animate-spin size-4 border-2 border-white border-t-transparent rounded-full"></span>
         <span v-else class="material-symbols-outlined text-sm">save</span>
@@ -175,11 +194,14 @@ onMounted(fetchData)
         v-for="subject in filteredSubjects" 
         :key="subject.id"
         @click="toggleSubject(subject.id)"
-        class="group relative flex items-center bg-white dark:bg-slate-900 border rounded-lg overflow-hidden cursor-pointer transition-all duration-200"
+        class="group relative flex items-center bg-white dark:bg-slate-900 border rounded-lg overflow-hidden transition-all duration-200"
         :class="[
           selectedSubjectIds.includes(subject.id) 
             ? 'border-green-600 ring-1 ring-green-600' 
-            : 'border-slate-200 dark:border-slate-800 hover:border-slate-400'
+            : 'border-slate-200 dark:border-slate-800',
+          isRegistrationOpen 
+            ? 'cursor-pointer hover:border-slate-400' 
+            : 'cursor-not-allowed opacity-80' // Cambia la apariencia si está cerrado
         ]"
       >
         <div 
