@@ -1,6 +1,15 @@
 <script setup lang="ts">
 import { ref, watch,computed } from 'vue'
 import CommentWindow from '../CommentWindow.vue';
+import { 
+  XMarkIcon, 
+  ArrowDownIcon, 
+  ArrowsPointingOutIcon, 
+  DocumentTextIcon, 
+  InformationCircleIcon,
+  CheckCircleIcon,
+  ArrowPathIcon
+} from '@heroicons/vue/24/solid'
 
 const props = defineProps<{
   show: boolean
@@ -62,8 +71,8 @@ function handleAction(status: number) {
               {{ subjectName }} — {{ studentName || 'Estudiante' }}
             </p>
           </div>
-          <button @click="close" :disabled="loading" class="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors cursor-pointer">
-            <span class="material-symbols-outlined">close</span>
+          <button @click="close" :disabled="loading" class="p-2 text-slate-400 hover:text-red-500 dark:hover:text-slate-200 transition-colors cursor-pointer">
+            <XMarkIcon class="w-6 h-6" />
           </button>
         </div>
 
@@ -80,7 +89,7 @@ function handleAction(status: number) {
                     <span class="text-xs font-bold text-slate-700 dark:text-white">Grupo {{ originName }}</span>
                   </div>
                   <div class="flex items-center justify-center py-1">
-                    <span class="material-symbols-outlined text-slate-300 text-sm">arrow_downward</span>
+                    <ArrowDownIcon class="w-4 h-4 text-slate-300" />
                   </div>
                   <div class="flex items-center justify-between">
                     <span class="text-[9px] font-bold text-slate-400 uppercase">Destino Solicitado</span>
@@ -103,7 +112,7 @@ function handleAction(status: number) {
                   <span class="text-xs text-slate-600 dark:text-slate-400 italic truncate pr-4">
                     "{{ request.studentComment }}"
                   </span>
-                  <span class="material-symbols-outlined text-slate-400 group-hover:text-slate-600 dark:group-hover:text-white transition-colors">open_in_full</span>
+                  <ArrowsPointingOutIcon class="w-4 h-4 text-slate-400 group-hover:text-slate-600 dark:group-hover:text-white transition-colors" />
                 </button>
               </div>
 
@@ -115,7 +124,7 @@ function handleAction(status: number) {
             <div v-if="request.pdfPath" class="animate-fade-in">
               <a :href="request.pdfPath" target="_blank" 
                 class="flex items-center justify-center gap-2 w-full py-3 border-2 border-dashed border-red-100 dark:border-red-900/30 text-[#e4002b] rounded-xl hover:bg-red-50 dark:hover:bg-red-900/10 transition-all text-[10px] font-black uppercase tracking-widest">
-                <span class="material-symbols-outlined text-lg">picture_as_pdf</span>
+                <DocumentTextIcon class="w-5 h-5" />
                 Ver Justificante Adjunto
               </a>
             </div>
@@ -135,7 +144,7 @@ function handleAction(status: number) {
             </div>
             
             <div class="p-4 bg-amber-50 dark:bg-amber-900/10 rounded-xl border border-dashed border-amber-200 dark:border-amber-900/30 flex gap-3">
-              <span class="material-symbols-outlined text-amber-500 text-sm">info</span>
+              <InformationCircleIcon class="w-5 h-5 text-amber-500 shrink-0" />
               <p class="text-[10px] text-amber-700 dark:text-amber-500/80 leading-snug font-medium">
                 Al emitir un veredicto (Aceptar o Rechazar), la resolución será definitiva.
               </p>
@@ -153,10 +162,11 @@ function handleAction(status: number) {
               :class="isButtonDisabled ? 'opacity-50 grayscale' : 'hover:bg-red-50'"
               class="px-6 py-2.5 rounded-lg text-xs font-black uppercase border border-red-200 text-red-600 transition-all flex items-center gap-2">
               <template v-if="loading && activeAction === 1">
-                <span class="material-symbols-outlined text-sm animate-spin">sync</span>
+                <ArrowPathIcon class="w-4 h-4 animate-spin" />
                 <span>Procesando...</span>
               </template>
               <template v-else>
+                <XMarkIcon class="w-4 h-4" />
                 <span>Rechazar</span>
               </template>
             </button>
@@ -165,11 +175,11 @@ function handleAction(status: number) {
               :class="isButtonDisabled ? 'opacity-50 grayscale' : 'hover:bg-black active:scale-95'"
               class="bg-[#262626] text-white px-8 py-2.5 rounded-lg text-xs font-black uppercase shadow-lg transition-all flex items-center gap-2">
               <template v-if="loading && activeAction === 2">
-                <span class="material-symbols-outlined text-sm animate-spin">sync</span>
+                <ArrowPathIcon class="w-4 h-4 animate-spin" />
                 <span>Actualizando...</span>
               </template>
               <template v-else>
-                <span class="material-symbols-outlined text-sm">check_circle</span>
+                <CheckCircleIcon class="w-4 h-4" />
                 <span>Aprobar Cambio</span>
               </template>
             </button>

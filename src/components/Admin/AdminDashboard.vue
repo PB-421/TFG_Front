@@ -1,5 +1,15 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
+import { 
+  UsersIcon, 
+  BookOpenIcon, 
+  UserGroupIcon, 
+  MapPinIcon, 
+  CalendarDaysIcon,
+  CheckCircleIcon,
+  ExclamationTriangleIcon,
+  ArrowRightIcon
+} from '@heroicons/vue/24/solid'
 
 const API_URL = import.meta.env.VITE_API_URL
 
@@ -41,7 +51,6 @@ const loading = ref(true)
 
 const isRegistrationOpen = ref(false)
 const togglingRegistration = ref(false)
-const CONTROL_NAME = 'matriculacion' 
 
 const alert = ref({
   show: false,
@@ -122,35 +131,35 @@ onMounted(loadData)
 const cards = [
   {
     name: 'Usuarios',
-    icon: 'group',
+    icon: UsersIcon,
     path: '/admin/users',
     color: 'text-blue-600 bg-blue-50 dark:bg-blue-900/30',
     get count(){ return profiles.value.length }
   },
   {
     name: 'Asignaturas',
-    icon: 'menu_book',
+    icon: BookOpenIcon,
     path: '/admin/subjets',
     color: 'text-purple-600 bg-purple-50 dark:bg-purple-900/30',
     get count(){ return subjects.value.length }
   },
   {
     name: 'Grupos',
-    icon: 'groups',
+    icon: UserGroupIcon,
     path: '/admin/groups',
     color: 'text-emerald-600 bg-emerald-50 dark:bg-emerald-900/30',
     get count(){ return groups.value.length }
   },
   {
     name: 'Localizaciones',
-    icon: 'location_on',
+    icon: MapPinIcon,
     path: '/admin/locations',
     color: 'text-amber-600 bg-amber-50 dark:bg-amber-900/30',
     get count(){ return locations.value.length }
   },
   {
     name: 'Horarios',
-    icon: 'schedule',
+    icon: CalendarDaysIcon,
     path: '/admin/schedules',
     color: 'text-pink-600 bg-pink-50 dark:bg-pink-900/30',
     get count(){ return schedules.value.length }
@@ -202,38 +211,23 @@ const cards = [
         <p class="text-slate-500 animate-pulse">Cargando dashboard...</p>
       </div>
 
-      <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <router-link
-          v-for="card in cards"
-          :key="card.name"
-          :to="card.path"
+      <div v-else-if="!loading" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <router-link v-for="card in cards" :key="card.name" :to="card.path"
           class="group relative flex items-stretch bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg overflow-hidden hover:border-indigo-300 transition-all shadow-sm hover:shadow-md"
         >
           <div class="w-1.5 self-stretch bg-[#e4002b]"></div>
-
           <div class="flex-1 p-6">
             <div class="flex items-center justify-between mb-4">
-              <div 
-                class="p-2.5 rounded text-slate-700 dark:text-slate-200 bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 group-hover:text-[#0090e4] group-hover:bg-indigo-50 transition-colors"
-                :class="card.color"
-              >
-                <span class="material-symbols-outlined text-2xl">
-                  {{ card.icon }}
-                </span>
+              <div class="p-2.5 rounded transition-colors" :class="card.color">
+                <component :is="card.icon" class="size-6 stroke-[1.5px]" />
               </div>
             </div>
-
             <div class="space-y-1">
-              <p class="text-xs text-slate-400 font-bold uppercase tracking-tight">
-                {{ card.name }}
-              </p>
-              <p class="text-4xl font-light text-slate-800 dark:text-white tracking-tight">
-                {{ card.count }}
-              </p>
+              <p class="text-xs text-slate-400 font-bold uppercase tracking-tight">{{ card.name }}</p>
+              <p class="text-4xl font-light text-slate-800 dark:text-white tracking-tight">{{ card.count }}</p>
             </div>
-            
             <div class="mt-4 flex items-center text-xs font-medium text-[#0090e4] opacity-0 group-hover:opacity-100 transition-opacity">
-              Gestionar <span class="material-symbols-outlined text-sm ml-1">arrow_forward</span>
+              Gestionar <ArrowRightIcon class="size-4 ml-1" />
             </div>
           </div>
         </router-link>
@@ -244,9 +238,7 @@ const cards = [
       <div v-if="alert.show && alert.type === 'success'" class="fixed bottom-6 right-6 z-50 max-w-sm w-full bg-white dark:bg-slate-900 shadow-xl rounded-lg border border-slate-200 flex items-stretch overflow-hidden">
         <div class="w-1.5 bg-green-500"></div>
         <div class="flex-1 p-4 flex items-center gap-4">
-          <div class="flex items-center justify-center h-10 w-10 rounded-full bg-green-50 text-green-600">
-            <span class="material-symbols-outlined text-xl">check_circle</span>
-          </div>
+          <CheckCircleIcon class="size-8 text-green-500" />
           <div class="flex-1">
             <h3 class="text-sm font-bold text-slate-800 dark:text-white uppercase tracking-tight">¡Actualizado!</h3>
             <p class="text-xs text-slate-500 mt-0.5">{{ alert.message }}</p>
@@ -259,9 +251,7 @@ const cards = [
       <div v-if="alert.show && alert.type === 'error'" class="fixed inset-0 z-100 flex items-center justify-center p-4">
         <div class="fixed inset-0 bg-slate-900/40 backdrop-blur-[2px]" @click="alert.show = false"></div>
         <div class="relative bg-white dark:bg-slate-900 w-full max-w-md rounded-lg shadow-2xl p-8 text-center border border-slate-200">
-          <div class="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-red-50 mb-6">
-            <span class="material-symbols-outlined text-red-500 text-4xl">error</span>
-          </div>
+          <ExclamationTriangleIcon class="size-16 text-red-500 mx-auto mb-6" />
           <h3 class="text-2xl font-light text-slate-800 dark:text-white mb-3">Error</h3>
           <p class="text-slate-500 text-sm mb-6">{{ alert.message }}</p>
           <button @click="alert.show = false" class="w-full bg-[#262626] text-white py-3 rounded font-medium">Cerrar</button>

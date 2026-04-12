@@ -11,6 +11,7 @@
     "type-check": "vue-tsc --build"
   },
   "dependencies": {
+    "@heroicons/vue": "^2.2.0",
     "@supabase/supabase-js": "^2.97.0",
     "@tailwindcss/postcss": "^4.2.1",
     "pinia": "^3.0.4",

@@ -1,6 +1,18 @@
 <script setup lang="ts">
 import { ref, onMounted,computed } from 'vue'
 import ModalWindow from '@/components/ModalWindow.vue'
+import { 
+  PlusIcon, 
+  MagnifyingGlassIcon, 
+  MapPinIcon, 
+  UsersIcon,
+  PencilSquareIcon,
+  TrashIcon,
+  MapIcon,
+  CheckCircleIcon,
+  ExclamationTriangleIcon,
+  XMarkIcon 
+} from '@heroicons/vue/24/solid'
 
 const API_URL = import.meta.env.VITE_API_URL
 
@@ -143,14 +155,14 @@ onMounted(fetchData)
           <h1 class="text-3xl font-light text-slate-900 dark:text-slate-900">Gestión de Ubicaciones</h1>
         </div>
         <button @click="openCreate" class="flex items-center gap-2 bg-[#262626] hover:bg-black text-white px-6 py-2.5 rounded shadow-sm transition-all font-medium text-sm">
-          <span class="material-symbols-outlined text-sm">+</span>
+          <PlusIcon class="size-4 stroke-[3px]" />
           Nueva Ubicación
         </button>
       </div>
 
       <div class="grid grid-cols-1 md:grid-cols-1 gap-4">
-        <div class="relativ max-w-sm">
-          <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">s</span>
+        <div class="relative max-w-sm">
+          <MagnifyingGlassIcon class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 size-5" />
           <input 
             v-model="searchQuery"
             type="text" 
@@ -166,7 +178,7 @@ onMounted(fetchData)
       </div>
 
       <div v-if="filteredLocations.length === 0 && !loading" class="text-center py-12 border-2 border-dashed border-slate-200 rounded-xl">
-        <span class="material-symbols-outlined text-4xl text-slate-300">search_off</span>
+        <MapIcon class="size-12 text-slate-300 mx-auto" />
         <p class="text-slate-500 mt-2">No se encontraron ubicaciones con ese nombre.</p>
         <button @click="searchQuery = ''" class="text-[#0090e4] text-sm font-medium mt-1 hover:underline">Limpiar filtros</button>
       </div>
@@ -180,6 +192,9 @@ onMounted(fetchData)
           <div class="flex-1 grid grid-cols-1 md:grid-cols-12 items-center px-6 py-5 gap-4">
             
             <div class="md:col-span-5 flex items-center gap-4 border-r border-slate-100 pr-4">
+              <div class="p-2 bg-slate-50 dark:bg-slate-800 rounded-lg">
+                <MapPinIcon class="size-5 text-slate-400" />
+              </div>
               <div class="flex flex-col">
                 <span class="text-sm font-bold text-slate-700 dark:text-slate-200 uppercase tracking-tight">
                   {{ loc.name }}
@@ -191,6 +206,7 @@ onMounted(fetchData)
             <div class="md:col-span-5 flex flex-col">
               <span class="text-xs text-slate-400 font-bold uppercase tracking-tighter">Capacidad Máxima</span>
               <div class="flex items-center gap-2 mt-0.5">
+                <UsersIcon class="size-4 text-[#e4002b]" />
                 <span class="text-base font-semibold text-white dark:text-white">
                   {{ loc.capacity }} Personas
                 </span>
@@ -199,10 +215,10 @@ onMounted(fetchData)
 
             <div class="md:col-span-2 flex justify-end gap-2">
               <button @click="openEdit(loc)" class="p-2 text-slate-400 hover:text-[#0090e4] hover:bg-indigo-50 rounded-full transition-colors">
-                <span class="material-symbols-outlined">edit_note</span>
+                <PencilSquareIcon class="size-5" />
               </button>
               <button @click="openDelete(loc)" class="p-2 text-slate-300 hover:text-red-600 hover:bg-red-50 rounded-full transition-colors">
-                <span class="material-symbols-outlined">delete_sweep</span>
+                <TrashIcon class="size-5" />
               </button>
             </div>
           </div>
@@ -233,14 +249,14 @@ onMounted(fetchData)
         <div class="w-1.5 bg-green-500"></div>
         <div class="flex-1 p-4 flex items-center gap-4">
           <div class="flex items-center justify-center h-10 w-10 rounded-full bg-green-50 dark:bg-green-900/20 text-green-600">
-            <span class="material-symbols-outlined text-xl">check_circle</span>
+            <CheckCircleIcon class="size-8 text-green-500" />
           </div>
           <div class="flex-1">
             <h3 class="text-sm font-bold text-slate-800 dark:text-white uppercase tracking-tight">¡Operación Exitosa!</h3>
             <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{{ alert.message }}</p>
           </div>
           <button @click="closeAlert" class="p-1 text-slate-300 hover:text-slate-500 transition-colors">
-            <span class="material-symbols-outlined text-lg">close</span>
+            <XMarkIcon class="size-5" />
           </button>
         </div>
       </div>
@@ -259,7 +275,7 @@ onMounted(fetchData)
         <div class="relative bg-white dark:bg-slate-900 w-full max-w-md rounded-lg shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden transform transition-all">
           <div class="p-8 text-center">
             <div class="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-red-50 dark:bg-red-900/10 mb-6">
-              <span class="material-symbols-outlined text-red-500 text-4xl font-light">error</span>
+              <ExclamationTriangleIcon class="size-10 text-red-500" />
             </div>
             <h3 class="text-2xl font-light text-slate-800 dark:text-white mb-3">Algo salió mal</h3>
             <p class="text-slate-500 dark:text-slate-400 text-sm leading-relaxed">{{ alert.message }}</p>

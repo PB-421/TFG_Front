@@ -2,6 +2,17 @@
 import { ref, onMounted, computed } from 'vue'
 import ModalWindow from '@/components/ModalWindow.vue'
 import { useAuthStore } from '@/stores/auth.store'
+import { 
+  PlusIcon, 
+  MagnifyingGlassIcon, 
+  PencilSquareIcon, 
+  TrashIcon,
+  DocumentMagnifyingGlassIcon,
+  CheckCircleIcon,
+  ExclamationTriangleIcon,
+  XMarkIcon,
+  BookOpenIcon
+} from '@heroicons/vue/24/solid'
 
 
 const API_URL = import.meta.env.VITE_API_URL
@@ -152,14 +163,14 @@ onMounted(fetchData)
           @click="openCreate" 
           class="flex items-center gap-2 bg-[#262626] hover:bg-black text-white px-6 py-2.5 rounded shadow-sm transition-all font-medium text-sm"
         >
-          <span class="material-symbols-outlined text-sm">+</span>
+          <PlusIcon class="size-4 stroke-[3px]" />
           Nueva Asignatura
         </button>
       </div>
 
       <div class="grid grid-cols-1 md:grid-cols-1 gap-4">
-        <div class="relativ max-w-sm">
-          <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">s</span>
+        <div class="relative max-w-sm">
+          <MagnifyingGlassIcon class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 size-5" />
           <input 
             v-model="searchQuery"
             type="text" 
@@ -175,7 +186,7 @@ onMounted(fetchData)
       </div>
 
       <div v-if="filteredSubjects.length === 0 && !loading" class="text-center py-12 border-2 border-dashed border-slate-200 rounded-xl">
-        <span class="material-symbols-outlined text-4xl text-slate-300">search_off</span>
+        <DocumentMagnifyingGlassIcon class="size-12 text-slate-300 mx-auto" />
         <p class="text-slate-500 mt-2">No se encontraron asignaturas con ese nombre.</p>
         <button @click="searchQuery = ''" class="text-[#0090e4] text-sm font-medium mt-1 hover:underline">Limpiar filtros</button>
       </div>
@@ -208,16 +219,17 @@ onMounted(fetchData)
 
             <div class="md:col-span-4 flex justify-end gap-2">
               <button @click="openEdit(subject)" class="p-2 text-slate-400 hover:text-[#0090e4] hover:bg-indigo-50 rounded-full transition-colors">
-                <span class="material-symbols-outlined">edit_note</span>
+                <PencilSquareIcon class="size-5" />
               </button>
               <button @click="openDelete(subject)" class="p-2 text-slate-300 hover:text-red-600 hover:bg-red-50 rounded-full transition-colors">
-                <span class="material-symbols-outlined">delete_sweep</span>
+                <TrashIcon class="size-5" />
               </button>
             </div>
           </div>
         </div>
 
         <div v-if="subjects.length === 0" class="text-center py-20 border-2 border-dashed border-slate-200 rounded-xl">
+          <BookOpenIcon class="size-12 text-slate-200 mx-auto mb-4" />
           <p class="text-slate-400 italic">No hay asignaturas registradas actualmente.</p>
         </div>
       </div>
@@ -233,65 +245,36 @@ onMounted(fetchData)
       @submit="handleSubmit"
     />
 
-    <Transition
-      enter-active-class="transform ease-out duration-300 transition"
-      enter-from-class="translate-y-2 opacity-0 sm:translate-y-0 sm:translate-x-4"
-      enter-to-class="translate-y-0 opacity-100 sm:translate-x-0"
-      leave-active-class="transition ease-in duration-200"
-      leave-from-class="opacity-100"
-      leave-to-class="opacity-0"
-    >
+    <Transition name="fade-up">
       <div v-if="alert.show && alert.type === 'success'" 
           class="fixed bottom-6 right-6 z-100 max-w-sm w-full bg-white dark:bg-slate-900 shadow-xl rounded-lg border border-slate-200 dark:border-slate-800 flex items-stretch overflow-hidden">
-        
         <div class="w-1.5 bg-green-500"></div>
-
         <div class="flex-1 p-4 flex items-center gap-4">
-          <div class="flex items-center justify-center h-10 w-10 rounded-full bg-green-50 dark:bg-green-900/20 text-green-600">
-            <span class="material-symbols-outlined text-xl">check_circle</span>
-          </div>
-          
+          <CheckCircleIcon class="size-8 text-green-500" />
           <div class="flex-1">
             <h3 class="text-sm font-bold text-slate-800 dark:text-white uppercase tracking-tight">¡Operación Exitosa!</h3>
             <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{{ alert.message }}</p>
           </div>
-
           <button @click="closeAlert" class="p-1 text-slate-300 hover:text-slate-500 transition-colors">
-            <span class="material-symbols-outlined text-lg">close</span>
+            <XMarkIcon class="size-5" />
           </button>
         </div>
       </div>
     </Transition>
 
-    <Transition
-      enter-active-class="ease-out duration-300"
-      enter-from-class="opacity-0"
-      enter-to-class="opacity-100"
-      leave-active-class="ease-in duration-200"
-      leave-from-class="opacity-100"
-      leave-to-class="opacity-0"
-    >
+    <Transition name="fade">
       <div v-if="alert.show && alert.type === 'error'" class="fixed inset-0 z-200 flex items-center justify-center p-4">
         <div class="fixed inset-0 bg-slate-900/40 backdrop-blur-[2px]" @click="closeAlert"></div>
-
         <div class="relative bg-white dark:bg-slate-900 w-full max-w-md rounded-lg shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden transform transition-all">
-          
           <div class="p-8 text-center">
             <div class="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-red-50 dark:bg-red-900/10 mb-6">
-              <span class="material-symbols-outlined text-red-500 text-4xl font-light">error</span>
+              <ExclamationTriangleIcon class="size-10 text-red-500" />
             </div>
-            
             <h3 class="text-2xl font-light text-slate-800 dark:text-white mb-3">Algo salió mal</h3>
-            <p class="text-slate-500 dark:text-slate-400 text-sm leading-relaxed">
-              {{ alert.message }}
-            </p>
+            <p class="text-slate-500 dark:text-slate-400 text-sm leading-relaxed">{{ alert.message }}</p>
           </div>
-
           <div class="px-8 pb-8 flex flex-col">
-            <button 
-              @click="closeAlert"
-              class="w-full bg-[#262626] hover:bg-black text-white px-6 py-3 rounded shadow-sm transition-all font-medium text-sm active:scale-[0.98]"
-            >
+            <button @click="closeAlert" class="w-full bg-[#262626] hover:bg-black text-white px-6 py-3 rounded shadow-sm transition-all font-medium text-sm">
               Cerrar y Reintentar
             </button>
           </div>
@@ -300,3 +283,9 @@ onMounted(fetchData)
     </Transition>
   </div>
 </template>
+
+<style scoped>
+.fade-up-enter-active, .fade-up-leave-active { transition: all 0.3s ease; }
+.fade-up-enter-from { opacity: 0; transform: translateY(20px); }
+.fade-up-leave-to { opacity: 0; }
+</style>

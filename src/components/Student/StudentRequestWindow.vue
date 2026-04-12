@@ -1,6 +1,14 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
 import { createClient } from '@supabase/supabase-js'
+import { 
+  XMarkIcon, 
+  ExclamationTriangleIcon, 
+  InformationCircleIcon, 
+  CloudArrowUpIcon,
+  PaperAirplaneIcon,
+  TrashIcon
+} from '@heroicons/vue/24/solid'
 
 const API_URL = import.meta.env.VITE_API_URL
 
@@ -140,15 +148,15 @@ function close() { emit('close') }
               Proceso de solicitud de cambio de grupo
             </p>
           </div>
-          <button @click="close" class="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors">
-            <span class="material-symbols-outlined">close</span>
+          <button @click="close" class="p-2 text-slate-400 hover:text-red-500 dark:hover:text-slate-200 transition-colors">
+            <XMarkIcon class="w-6 h-6" />
           </button>
         </div>
 
         <div class="p-8">
           <div v-if="mode === 'delete'" class="py-12 text-center">
             <div class="size-20 bg-red-50 dark:bg-red-900/20 rounded-full flex items-center justify-center mx-auto mb-6">
-              <span class="material-symbols-outlined text-red-500 text-4xl">warning</span>
+              <ExclamationTriangleIcon class="w-10 h-10 text-red-500" />
             </div>
             <h3 class="text-lg font-bold text-slate-800 dark:text-white uppercase tracking-tight">¿Confirmar eliminación?</h3>
             <p class="text-slate-500 dark:text-slate-400 text-sm mt-2">Esta acción borrará permanentemente la solicitud seleccionada.</p>
@@ -188,7 +196,7 @@ function close() { emit('close') }
 
               <div v-if="originGroupId && destinationGroupId" class="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-dashed border-slate-200 dark:border-slate-700">
                 <div class="flex items-start gap-3 text-slate-600 dark:text-slate-400">
-                  <span class="material-symbols-outlined text-xl text-[#e4002b]">info</span>
+                  <InformationCircleIcon class="w-5 h-5 text-[#e4002b] shrink-0" />
                   <p class="text-[11px] leading-snug">
                     Solicitando traslado de <span class="font-bold text-slate-800 dark:text-white">{{ studentGroups.find(g => g.id === originGroupId)?.name }}</span> a 
                     <span class="font-bold text-slate-800 dark:text-white">{{ filteredGroups.find(g => g.id === destinationGroupId)?.name }}</span>.
@@ -220,7 +228,7 @@ function close() { emit('close') }
                 <span class="text-[9px] font-bold text-slate-400 uppercase ml-1">Justificante (PDF)</span>
                 <label class="mt-1 flex flex-col items-center justify-center w-full h-28 border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-xl cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all group">
                   <div class="flex flex-col items-center justify-center pt-2">
-                    <span class="material-symbols-outlined text-slate-400 group-hover:text-red-400 mb-1">cloud_upload</span>
+                    <CloudArrowUpIcon class="w-8 h-8 text-slate-400 group-hover:text-red-400 mb-1 transition-colors" />
                     <p class="text-[10px] text-slate-500 font-medium px-4 text-center leading-tight">
                       {{ file ? file.name : 'Haz clic para adjuntar documento acreditativo' }}
                     </p>
@@ -243,8 +251,8 @@ function close() { emit('close') }
             :class="mode === 'delete' ? 'bg-red-600 hover:bg-red-700' : 'bg-[#262626] hover:bg-black'"
             class="disabled:opacity-20 disabled:grayscale text-white px-8 py-2.5 rounded-lg text-xs font-black uppercase shadow-lg transition-all active:scale-95 flex items-center gap-2"
           >
-            <span class="material-symbols-outlined text-sm">{{ mode === 'delete' ? 'delete' : 'send' }}</span>
-            {{ uploading ? 'Subiendo...' : (mode === 'delete' ? 'Confirmar Eliminación' : 'Enviar Solicitud') }}
+            <TrashIcon v-if="mode === 'delete'" class="w-4 h-4" />
+            <PaperAirplaneIcon v-else class="w-4 h-4" />
           </button>
         </div>
       </div>

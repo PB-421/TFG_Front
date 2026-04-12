@@ -1,6 +1,20 @@
 <script setup lang="ts">
 import { ref, watch, computed } from 'vue'
 import { useAuthStore } from '@/stores/auth.store'
+import { 
+  XMarkIcon, 
+  ExclamationTriangleIcon, 
+  TrashIcon, 
+  UserIcon, 
+  BookOpenIcon, 
+  MapPinIcon, 
+  CalendarIcon, 
+  UserGroupIcon,
+  ArrowPathIcon,
+  CheckIcon,
+  LockClosedIcon,
+  IdentificationIcon
+} from '@heroicons/vue/24/solid'
 
 const API_URL = import.meta.env.VITE_API_URL
 const auth = useAuthStore()
@@ -238,36 +252,40 @@ function close() {
       <div class="relative bg-white dark:bg-slate-900 w-full max-w-2xl rounded-xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden transform transition-all">
         
         <div class="px-8 pt-8 pb-4 flex items-center justify-between border-b border-slate-100 dark:border-slate-800">
-          <div>
-            <h2 class="text-xl font-light text-slate-800 dark:text-white uppercase tracking-tight">
-              {{props.mode === 'create' ? 'Crear' : props.mode === 'edit' ? 'Editar' : 'Eliminar' }} 
-              <span class="font-bold text-[#e4002b]">
-                {{ 
-                  props.type === 'user' ? 'Usuario' : 
-                  props.type === 'subject' ? 'Asignatura' : 
-                  props.type === 'location' ? 'Ubicación' : 
-                  props.type === 'schedule' ? 'Horario' : 'Grupo' 
-                }}
-              </span>
-            </h2>
-            <p class="text-slate-400 text-[10px] mt-1 font-black tracking-widest uppercase">
-              Módulo de <span class="text-slate-600 dark:text-slate-200">Administración</span>
-            </p>
+          <div class="flex items-center gap-4">
+            <div class="p-2.5 bg-slate-50 dark:bg-slate-800 rounded-lg">
+              <UserIcon v-if="props.type === 'user'" class="size-6 text-slate-400" />
+              <BookOpenIcon v-else-if="props.type === 'subject'" class="size-6 text-slate-400" />
+              <MapPinIcon v-else-if="props.type === 'location'" class="size-6 text-slate-400" />
+              <CalendarIcon v-else-if="props.type === 'schedule'" class="size-6 text-slate-400" />
+              <UserGroupIcon v-else class="size-6 text-slate-400" />
+            </div>
+            <div>
+              <h2 class="text-xl font-light text-slate-800 dark:text-white uppercase tracking-tight">
+                {{props.mode === 'create' ? 'Crear' : props.mode === 'edit' ? 'Editar' : 'Eliminar' }} 
+                <span class="font-bold text-[#e4002b]">
+                  {{ props.type === 'user' ? 'Usuario' : props.type === 'subject' ? 'Asignatura' : props.type === 'location' ? 'Ubicación' : props.type === 'schedule' ? 'Horario' : 'Grupo' }}
+                </span>
+              </h2>
+              <p class="text-slate-400 text-[10px] mt-0.5 font-black tracking-widest uppercase">
+                Panel de <span class="text-slate-600 dark:text-slate-200">Control Maestro</span>
+              </p>
+            </div>
           </div>
-          <button @click="close" class="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors">
-            <span class="material-symbols-outlined">close</span>
+          <button @click="close" class="p-2 text-slate-400 hover:text-red-500 transition-colors">
+            <XMarkIcon class="size-6" />
           </button>
         </div>
 
         <div class="p-8">
           <div v-if="showError" class="mb-6 bg-red-50 dark:bg-red-900/10 text-red-600 p-3 rounded-lg text-[10px] font-black border border-red-100 dark:border-red-900/20 flex items-center gap-2 uppercase tracking-widest">
-            <span class="material-symbols-outlined text-sm">warning</span>
-            Error: Campos obligatorios vacíos
+            <ExclamationTriangleIcon class="size-4" />
+            Faltan campos obligatorios por completar
           </div>
 
           <div v-if="props.mode === 'delete'" class="py-10 flex flex-col items-center text-center">
             <div class="h-20 w-20 bg-red-50 dark:bg-red-900/10 rounded-full flex items-center justify-center mb-6">
-              <span class="material-symbols-outlined text-red-500 text-4xl">delete_forever</span>
+              <TrashIcon class="size-10 text-red-500" />
             </div>
             <h3 class="text-xl font-bold text-slate-800 dark:text-white uppercase tracking-tight">¿Confirmar eliminación?</h3>
             <p class="text-slate-500 dark:text-slate-400 text-xs mt-2 max-w-xs leading-relaxed">
@@ -279,12 +297,13 @@ function close() {
             
             <div class="flex flex-col space-y-5">
               <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">
+                <IdentificationIcon class="size-3 text-[#e4002b]" />
                 1. Información Básica
               </label>
 
               <div v-if="props.type !== 'schedule'">
                 <span class="text-[9px] font-bold text-slate-400 uppercase ml-1">Nombre</span>
-                <input v-model="name" placeholder="Escribir..." 
+                <input v-model="name" placeholder="Escribe aqui..." 
                   class="mt-1 w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-lg px-4 py-3 text-xs focus:border-red-400 outline-none transition-all dark:text-white" />
               </div>
 
@@ -321,6 +340,7 @@ function close() {
 
             <div class="flex flex-col space-y-5">
               <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">
+                <ArrowPathIcon class="size-3 text-[#e4002b]" />
                 2. Parámetros Técnicos
               </label>
 
@@ -375,20 +395,21 @@ function close() {
               </template>
 
               <div v-if="props.type === 'location'">
-                  <span class="text-[9px] font-bold text-slate-400 uppercase">Aforo Máximo</span>
-                  <span v-if="isCheckingUsage" class="text-[8px] font-bold text-[#0090e4] animate-pulse uppercase tracking-wider">
-                    Verificando disponibilidad...
-                  </span>
-                <input 
-                  v-model="capacity" 
-                  type="number" 
-                  :hidden="isLocationInUse"
-                  :disabled="isCheckingUsage"
-                  class="mt-1 w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-lg px-4 py-3 text-xs outline-none dark:text-white focus:border-red-400 transition-all disabled:opacity-60 disabled:cursor-not-allowed disabled:bg-slate-100 dark:disabled:bg-slate-800" 
-                />
+                <span class="text-[9px] font-bold text-slate-400 uppercase">Capacidad de Aforo</span>
+                <div class="mt-1 relative">
+                  <input 
+                    v-model="capacity" 
+                    type="number" 
+                    :disabled="isCheckingUsage || isLocationInUse"
+                    class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-4 py-3 text-sm outline-none dark:text-white focus:border-[#e4002b] transition-all disabled:opacity-40" 
+                  />
+                  <div v-if="isCheckingUsage" class="absolute right-3 top-3.5 flex items-center gap-1.5">
+                    <ArrowPathIcon class="size-4 text-[#0090e4] animate-spin" />
+                  </div>
+                </div>
                 
                 <p v-if="isLocationInUse" class="mt-2 text-[9px] font-black text-orange-500 uppercase tracking-widest flex items-center gap-1">
-                  <span class="material-symbols-outlined text-[12px]">lock</span>
+                  <LockClosedIcon class="size-3" />
                   Ubicación en uso. Aforo bloqueado.
                 </p>
               </div>
@@ -410,15 +431,14 @@ function close() {
             class="text-white min-w-160px px-8 py-2.5 rounded-lg text-xs font-black uppercase shadow-lg transition-all flex items-center justify-center gap-2"
           >
             <template v-if="props.loading">
-              <span class="material-symbols-outlined text-sm animate-spin">sync</span>
+              <ArrowPathIcon class="size-4 animate-spin" />
               <span>Procesando solicitud...</span>
             </template>
 
             <template v-else>
-              <span class="material-symbols-outlined text-sm">
-                {{ props.mode === 'delete' ? 'delete' : 'save_as' }}
-              </span>
-              {{ props.mode === 'delete' ? 'Confirmar Baja' : 'Guardar Datos' }}
+              <TrashIcon v-if="props.mode === 'delete'" class="size-4" />
+              <CheckIcon v-else class="size-4" />
+              {{ props.mode === 'delete' ? 'Eliminar' : 'Confirmar Cambios' }}
             </template>
           </button>
         </div>

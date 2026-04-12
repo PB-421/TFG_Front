@@ -3,6 +3,7 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth.store'
 import HeaderNavLinks from './HeaderNavLinks.vue'
+import { ArrowLeftEndOnRectangleIcon } from '@heroicons/vue/24/outline'
 
 const auth = useAuthStore()
 const router = useRouter()
@@ -20,13 +21,12 @@ const handleLogout = async () => {
   try {
     await auth.logout()
     isMenuOpen.value = false
-    router.push('/login') // Redirigir al login tras cerrar sesión
+    router.push('/login') 
   } catch (error) {
     console.error('Error al cerrar sesión:', error)
   }
 }
 
-// Cerrar el menú si se hace click fuera
 const handleClickOutside = (event: MouseEvent) => {
   if (menuRef.value && !menuRef.value.contains(event.target as Node)) {
     isMenuOpen.value = false
@@ -94,7 +94,7 @@ const avatarUrl = computed(() => {
                   @click="handleLogout"
                   class="flex items-center gap-3 w-full px-4 py-2.5 text-sm text-gray-700 hover:bg-[#f0f0f0] hover:text-[#e4002b] transition-colors"
                 >
-                  <span class="material-symbols-outlined text-lg">logout</span>
+                  <ArrowLeftEndOnRectangleIcon class="size-5 text-[#e4002b]" />
                   Cerrar Sesión
                 </button>
               </div>
