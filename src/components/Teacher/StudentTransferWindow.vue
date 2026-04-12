@@ -1,5 +1,12 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
+import { 
+  XMarkIcon, 
+  MagnifyingGlassIcon, 
+  CheckCircleIcon, 
+  InformationCircleIcon, 
+  ArrowsRightLeftIcon 
+} from '@heroicons/vue/24/solid'
 
 interface Profile {
   id: string
@@ -91,8 +98,8 @@ function close() {
               Mover de: <span class="text-slate-600 dark:text-slate-200">{{ sourceGroup?.name }}</span>
             </p>
           </div>
-          <button @click="close" class="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors">
-            <span class="material-symbols-outlined">close</span>
+          <button @click="close" class="p-2 text-slate-400 hover:text-red-500 dark:hover:text-slate-200 transition-colors">
+            <XMarkIcon class="w-6 h-6" />
           </button>
         </div>
 
@@ -105,7 +112,7 @@ function close() {
               </label>
               
               <div class="relative">
-                <span class="material-symbols-outlined absolute left-3 top-2.5 text-slate-400 text-sm">search</span>
+                <MagnifyingGlassIcon class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                 <input 
                   v-model="searchQuery"
                   type="text" 
@@ -131,7 +138,7 @@ function close() {
                     <span class="text-sm font-bold text-slate-700 dark:text-slate-200">{{ student.name }}</span>
                     <span class="text-[10px] text-slate-400">{{ student.email }}</span>
                   </div>
-                  <span v-if="selectedStudentId === student.id" class="material-symbols-outlined text-red-500 text-sm">check_circle</span>
+                  <CheckCircleIcon v-if="selectedStudentId === student.id" class="w-5 h-5 text-red-500" />
                 </button>
               </div>
             </div>
@@ -167,7 +174,7 @@ function close() {
 
               <div v-if="selectedStudentId && targetGroupId" class="mt-auto p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-dashed border-slate-200 dark:border-slate-700">
                 <div class="flex items-center gap-3 text-slate-600 dark:text-slate-400">
-                  <span class="material-symbols-outlined text-xl">info</span>
+                  <InformationCircleIcon class="w-5 h-5 text-[#e4002b]" />
                   <p class="text-[11px] leading-snug">
                     Se moverá al alumno seleccionado al grupo <span class="font-bold text-slate-800 dark:text-white">{{ availableGroups.find(g => g.id === targetGroupId)?.name }}</span>.
                   </p>
@@ -187,7 +194,7 @@ function close() {
             :disabled="!selectedStudentId || !targetGroupId"
             class="bg-[#262626] hover:bg-black disabled:opacity-20 disabled:grayscale text-white px-8 py-2.5 rounded-lg text-xs font-black uppercase shadow-lg transition-all active:scale-95 flex items-center gap-2"
           >
-            <span class="material-symbols-outlined text-sm">swap_horiz</span>
+            <ArrowsRightLeftIcon class="w-4 h-4" />
             Confirmar Cambio
           </button>
         </div>

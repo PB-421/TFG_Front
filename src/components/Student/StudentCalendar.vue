@@ -1,6 +1,15 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
 import { useAuthStore } from '@/stores/auth.store'
+import { 
+  ChevronLeftIcon, 
+  ChevronRightIcon, 
+  ClockIcon, 
+  MapPinIcon, 
+  UserGroupIcon,
+  CalendarDaysIcon,
+  InformationCircleIcon
+} from '@heroicons/vue/24/solid'
 
 const API_URL = import.meta.env.VITE_API_URL
 const auth = useAuthStore()
@@ -151,18 +160,25 @@ onMounted(fetchStudentSchedules)
 <template>
   <div class="max-w-6xl mx-auto p-6">
     <div class="flex items-center justify-between mb-8 border-b border-slate-200 pb-6">
-      <div>
-        <h1 class="text-3xl font-light text-slate-900 dark:text-slate-900">Calendario de prácticas</h1>
-        <p class="text-slate-500 text-sm mt-1 uppercase tracking-widest font-bold">
-          {{ monthNames[currentDate.getMonth()] }} {{ currentDate.getFullYear() }}
-        </p>
+      <div class="flex items-center gap-4">
+        <div class="bg-[#e4002b] p-2.5 rounded-lg shadow-lg shadow-red-500/20">
+          <CalendarDaysIcon class="size-6 text-white" />
+        </div>
+        <div>
+          <h1 class="text-3xl font-light text-slate-900 dark:text-slate-900 tracking-tight">Mi Calendario de Practicas</h1>
+          <p class="text-slate-500 text-xs mt-0.5 uppercase tracking-[0.2em] font-black">
+            {{ monthNames[currentDate.getMonth()] }} {{ currentDate.getFullYear() }}
+          </p>
+        </div>
       </div>
-      <div class="flex gap-2">
-        <button @click="changeMonth(-1)" class="p-2 flex items-center justify-center rounded-full border border-slate-800 text-slate-800 transition-all duration-300 hover:bg-slate-800 hover:text-white hover:border-white">
-          <span class="material-symbols-outlined">left</span>
+      
+      <div class="flex items-center bg-white dark:bg-slate-900 border border-slate-200 rounded-xl p-1 shadow-sm">
+        <button @click="changeMonth(-1)" class="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors text-slate-600">
+          <ChevronLeftIcon class="size-5 stroke-[2.5px]" />
         </button>
-        <button @click="changeMonth(1)" class="p-2 flex items-center justify-center rounded-full border border-slate-800 text-slate-800 transition-all duration-300 hover:bg-slate-800 hover:text-white hover:border-white">
-          <span class="material-symbols-outlined">right</span>
+        <div class="px-4 text-xs font-bold text-slate-400 uppercase tracking-widest border-x border-slate-100">Mes</div>
+        <button @click="changeMonth(1)" class="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors text-slate-600">
+          <ChevronRightIcon class="size-5 stroke-[2.5px]" />
         </button> 
       </div>
     </div>
@@ -196,28 +212,33 @@ onMounted(fetchStudentSchedules)
               class="custom-tooltip absolute z-50 left-1/2 -translate-x-1/2 bottom-full mb-2 w-72 bg-white dark:bg-slate-900 border border-slate-200 shadow-2xl p-4 rounded-xl transition-all duration-200 opacity-0 invisible group-hover:opacity-100 group-hover:visible">
             
             <div class="flex items-center justify-between mb-4 border-b border-slate-100 pb-2">
-              <span class="text-xs font-black uppercase text-slate-400">Día {{ day }}</span>
+              <div class="flex items-center gap-2">
+                <InformationCircleIcon class="size-4 text-[#e4002b]" />
+                <span class="text-[10px] font-black uppercase text-slate-400 tracking-tighter">Programación Día {{ day }}</span>
+              </div>
               <span class="bg-slate-100 dark:bg-slate-800 text-slate-600 px-2 py-0.5 rounded text-[10px] font-bold">{{ getSessionsForDay(day).length }} sesiones</span>
             </div>
 
-            <div class="space-y-4 max-h-60 overflow-y-auto pr-2 custom-scrollbar">
-              <div v-for="session in getSessionsForDay(day)" :key="'detail-'+session.id" class="relative pl-3 border-l-2 border-[#e4002b]">
-                <h4 class="text-xs font-bold text-slate-800 dark:text-white uppercase leading-tight">
+            <div class="space-y-5 max-h-72 overflow-y-auto pr-2 custom-scrollbar">
+              <div v-for="session in getSessionsForDay(day)" :key="'detail-'+session.id" class="relative pl-4 border-l-2 border-slate-200 hover:border-[#e4002b] transition-colors group/item">
+                <h4 class="text-xs font-black text-slate-800 dark:text-white uppercase leading-tight mb-2">
                   {{ getSubjectName(session.group?.subjectId) }}
                 </h4>
                 
-                <p class="text-[10px] text-[#e4002b] font-medium mt-0.5 italic">
-                  Grupo: {{ session.group?.name || 'N/A' }}
-                </p>
-
-                <div class="mt-2 grid grid-cols-2 gap-2">
-                  <div class="flex flex-col">
-                    <span class="text-[9px] text-slate-400 font-bold uppercase">Hora</span>
-                    <span class="text-[11px] text-slate-600 dark:text-slate-300">{{ formatTime(session.startDate) }} - {{ formatTime(session.endDate) }}</span>
+                <div class="space-y-2">
+                  <div class="flex items-center gap-2 text-[10px] text-slate-500">
+                    <ClockIcon class="size-3.5 text-slate-400" />
+                    <span class="font-bold">{{ formatTime(session.startDate) }} - {{ formatTime(session.endDate) }}</span>
                   </div>
-                  <div class="flex flex-col">
-                    <span class="text-[9px] text-slate-400 font-bold uppercase">Aula</span>
-                    <span class="text-[11px] text-slate-600 dark:text-slate-300 truncate">{{ session.location?.name || 'N/A' }}</span>
+                  
+                  <div class="flex items-center gap-2 text-[10px] text-slate-500">
+                    <MapPinIcon class="size-3.5 text-[#e4002b]" />
+                    <span class="truncate">{{ session.location?.name || 'Aula no asignada' }}</span>
+                  </div>
+
+                  <div class="flex items-center gap-2 text-[10px] text-slate-500">
+                    <UserGroupIcon class="size-3.5 text-slate-400" />
+                    <span class="italic">Grupo: {{ session.group?.name || 'N/A' }}</span>
                   </div>
                 </div>
               </div>
