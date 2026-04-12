@@ -165,6 +165,19 @@
     modalOpen.value = true
   }
 
+  function getPriorityInfo(weight: number) {
+    if (weight >= 60) {
+      return { label: 'Muy Alta', subLabel: 'Externo', color: 'text-red-600', bgColor: 'bg-red-50', dot: 'bg-red-600' }
+    }
+    if (weight >= 40) {
+      return { label: 'Alta', subLabel: 'Colisión (PDF)', color: 'text-orange-600', bgColor: 'bg-orange-50', dot: 'bg-orange-600' }
+    }
+    if (weight >= 25) {
+      return { label: 'Media', subLabel: 'Colisión', color: 'text-amber-600', bgColor: 'bg-amber-50', dot: 'bg-amber-600' }
+    }
+    return { label: 'Baja', subLabel: 'Preferencia', color: 'text-blue-600', bgColor: 'bg-blue-50', dot: 'bg-blue-600' }
+  }
+
   async function handleRequestSubmit(payload: any) {
     if (!studentProfile.value) return;
     try {
@@ -248,10 +261,16 @@
           </div>
 
           <div class="md:col-span-3">
-            <span class="text-[10px] text-slate-400 font-bold uppercase tracking-tighter">Prioridad</span>
-            <div class="flex items-center gap-2">
-              <span class="text-sm font-medium" :class="req.weight > 10 ? 'text-red-500' : 'text-blue-500'">
-                {{ req.weight > 10 ? 'Alta (Justificada)' : 'Normal' }}
+            <span class="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-1 block">Prioridad</span>
+            <div class="flex flex-col">
+              <div class="flex items-center gap-1.5">
+                <span class="size-2 rounded-full" :class="getPriorityInfo(req.weight).dot"></span>
+                <span class="text-sm font-bold" :class="getPriorityInfo(req.weight).color">
+                  {{ getPriorityInfo(req.weight).label }}
+                </span>
+              </div>
+              <span class="text-[10px] text-slate-400 font-medium italic">
+                {{ getPriorityInfo(req.weight).subLabel }}
               </span>
             </div>
           </div>
@@ -272,18 +291,18 @@
             <button 
               v-if="req.teacherComment" 
               @click="openCommentModal(req.teacherComment)"
-              class="p-2 text-slate-200 hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded-full transition-all"
+              class="p-2 text-slate-400 hover:text-[#0090e4] hover:bg-indigo-50 rounded-full transition-colors"
               title="Ver comentario del profesor"
             >
               <ChatBubbleLeftEllipsisIcon class="w-5 h-5" />
             </button>
 
+            <a v-if="req.pdfPath" :href="req.pdfPath" title="Ver PDF adjunto" target="_blank" class="p-2 text-slate-400 hover:text-[#0090e4] hover:bg-indigo-50 rounded-full transition-colors">
+              <DocumentTextIcon class="w-5 h-5" />
+            </a>
             <button v-if="req.status === 0" @click="openDelete(req)" class="p-2 text-slate-300 hover:text-red-500 transition-colors">
               <TrashIcon class="w-5 h-5" />
             </button>
-            <a v-if="req.pdfPath" :href="req.pdfPath" target="_blank" class="p-2 text-slate-400 hover:text-red-500 transition-colors">
-              <DocumentTextIcon class="w-5 h-5" />
-            </a>
           </div>
         </div>
       </div>

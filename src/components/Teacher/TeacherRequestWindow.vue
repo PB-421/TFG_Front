@@ -71,7 +71,7 @@ function handleAction(status: number) {
               {{ subjectName }} — {{ studentName || 'Estudiante' }}
             </p>
           </div>
-          <button @click="close" :disabled="loading" class="p-2 text-slate-400 hover:text-red-500 dark:hover:text-slate-200 transition-colors cursor-pointer">
+          <button @click="close" :disabled="loading" class="p-2 text-slate-400 hover:text-red-500 transition-colors cursor-pointer">
             <XMarkIcon class="w-6 h-6" />
           </button>
         </div>

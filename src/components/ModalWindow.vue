@@ -272,7 +272,7 @@ function close() {
               </p>
             </div>
           </div>
-          <button @click="close" class="p-2 text-slate-400 hover:text-red-500 transition-colors">
+          <button @click="close" class="p-2 text-slate-400 hover:text-red-500 transition-colors cursor-pointer">
             <XMarkIcon class="size-6" />
           </button>
         </div>

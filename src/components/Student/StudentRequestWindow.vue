@@ -39,6 +39,7 @@ const uploading = ref(false)
 
 const reasons = [
   { label: 'Preferencia Personal', value: 10 },
+  { label: 'Colisión con asignatura', value: 25 },
   { label: 'Externo (Justificado)', value: 60 }
 ]
 
@@ -65,6 +66,9 @@ const filteredGroups = computed(() => {
 const isFormInvalid = computed(() => {
   if (props.mode === 'delete') return false;
   if (!originGroupId.value || !destinationGroupId.value || !weight.value) return true;
+  if(weight.value === 25){
+    if (studentComment.value.trim() === '') return true;
+  }
   if (weight.value === 60) {
     if (studentComment.value.trim() === '' || (!file.value && props.mode === 'create')) return true;
   }
@@ -107,13 +111,25 @@ async function handleSubmit() {
   try {
     if (props.mode === 'delete') { emit('submit', props.item.id); return; }
     let pdfUrl = props.item?.pdfPath || ''
+    let finalWeight = weight.value;
+
+    if (weight.value === 25) {
+      if (file.value) {
+        finalWeight = 40;
+        pdfUrl = await uploadToSupabase();
+      } else {
+        finalWeight = 25;
+      }
+    }
+    
     if (weight.value === 60 && file.value) pdfUrl = await uploadToSupabase()
+    
     
     emit('submit', {
       studentId: props.studentId,
       originGroupId: originGroupId.value,
       destinationGroupId: destinationGroupId.value,
-      weight: weight.value,
+      weight: finalWeight,
       studentComment: studentComment.value,
       pdfPath: weight.value === 60 ? pdfUrl : '',
       status: 0 
@@ -148,7 +164,7 @@ function close() { emit('close') }
               Proceso de solicitud de cambio de grupo
             </p>
           </div>
-          <button @click="close" class="p-2 text-slate-400 hover:text-red-500 dark:hover:text-slate-200 transition-colors">
+          <button @click="close" class="p-2 text-slate-400 hover:text-red-500 transition-colors cursor-pointer">
             <XMarkIcon class="w-6 h-6" />
           </button>
         </div>
@@ -213,7 +229,7 @@ function close() { emit('close') }
                 
                 <div class="flex gap-2 mb-4">
                   <button v-for="r in reasons" :key="r.value" @click="weight = r.value"
-                    :class="weight === r.value ? 'border-[#e4002b] bg-red-50 dark:bg-red-900/20 text-[#e4002b]' : 'border-slate-200 dark:border-slate-700 text-slate-400 hover:bg-slate-50'"
+                    :class="weight === r.value ? 'border-[#e4002b] bg-red-50 dark:bg-red-900/20 text-[#e4002b]' : 'border-slate-200 dark:border-slate-700 hover:text-[#e4002b] hover:border-[#e4002b]'"
                     class="flex-1 px-3 py-2.5 border rounded-lg text-[10px] font-black transition-all uppercase tracking-tighter">
                     {{ r.label }}
                   </button>
@@ -224,8 +240,10 @@ function close() { emit('close') }
                   :placeholder="weight === 60 ? 'Describe tu situación laboral/médica de forma detallada...' : 'Comentario opcional...'"></textarea>
               </div>
 
-              <div v-if="weight === 60" class="animate-fade-in">
-                <span class="text-[9px] font-bold text-slate-400 uppercase ml-1">Justificante (PDF)</span>
+              <div v-if="weight === 60 || weight === 25" class="animate-fade-in">
+                <span class="text-[9px] font-bold text-slate-400 uppercase ml-1">
+                  Justificante (PDF) {{ weight === 25 ? '(Opcional)' : '(Obligatorio)' }}
+                </span>
                 <label class="mt-1 flex flex-col items-center justify-center w-full h-28 border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-xl cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all group">
                   <div class="flex flex-col items-center justify-center pt-2">
                     <CloudArrowUpIcon class="w-8 h-8 text-slate-400 group-hover:text-red-400 mb-1 transition-colors" />

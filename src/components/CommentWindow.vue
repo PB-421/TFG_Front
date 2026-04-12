@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { XMarkIcon } from '@heroicons/vue/24/solid';
 defineProps<{
   show: boolean
   comment: string
@@ -22,8 +23,8 @@ const emit = defineEmits(['close'])
           <h2 class="text-xl font-light text-slate-800 dark:text-white uppercase tracking-tight">
             Comentario del <span class="font-bold text-amber-500">{{type === 1 ? "Estudiante" : "Profesor"}}</span>
           </h2>
-          <button @click="emit('close')" class="text-slate-400 hover:text-slate-600 transition-colors cursor-pointer">
-            <span class="material-symbols-outlined">close</span>
+          <button @click="emit('close')" class="p-2 text-slate-400 hover:text-red-500 transition-colors cursor-pointer">
+            <XMarkIcon class="w-6 h-6" />
           </button>
         </div>
 

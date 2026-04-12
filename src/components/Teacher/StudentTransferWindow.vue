@@ -98,7 +98,7 @@ function close() {
               Mover de: <span class="text-slate-600 dark:text-slate-200">{{ sourceGroup?.name }}</span>
             </p>
           </div>
-          <button @click="close" class="p-2 text-slate-400 hover:text-red-500 dark:hover:text-slate-200 transition-colors">
+          <button @click="close" class="p-2 text-slate-400 hover:text-red-500 transition-colors cursor-pointer">
             <XMarkIcon class="w-6 h-6" />
           </button>
         </div>

@@ -136,6 +136,19 @@ const openReview = (req: RequestDto) => {
   modalOpen.value = true
 }
 
+function getPriorityInfo(weight: number) {
+  if (weight >= 60) {
+    return { label: 'Muy Alta', subLabel: 'Externo', color: 'text-red-600', bgColor: 'bg-red-50', dot: 'bg-red-600' }
+  }
+  if (weight >= 40) {
+    return { label: 'Alta', subLabel: 'Colisión (PDF)', color: 'text-orange-600', bgColor: 'bg-orange-50', dot: 'bg-orange-600' }
+  }
+  if (weight >= 25) {
+    return { label: 'Media', subLabel: 'Colisión', color: 'text-amber-600', bgColor: 'bg-amber-50', dot: 'bg-amber-600' }
+  }
+  return { label: 'Baja', subLabel: 'Preferencia', color: 'text-blue-600', bgColor: 'bg-blue-50', dot: 'bg-blue-600' }
+}
+
 const sortedRequests = computed(() => {
   // Creamos una copia para no mutar el original con .sort()
   return [...requests.value].sort((a, b) => {
@@ -221,7 +234,7 @@ onMounted(loadData)
             </div>
           </div>
 
-          <div class="md:col-span-3">
+          <div class="md:col-span-4">
             <div class="flex flex-col border-l border-slate-100 dark:border-slate-800 md:pl-4">
               <span class="text-[10px] text-slate-400 font-bold uppercase tracking-tighter">Trayecto de Cambio</span>
               <div class="flex items-center gap-2 mt-1">
@@ -237,22 +250,21 @@ onMounted(loadData)
           </div>
 
           <div class="md:col-span-2">
+            <span class="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-1 block">Prioridad</span>
             <div class="flex flex-col">
-              <span class="text-[10px] text-slate-400 font-bold uppercase tracking-tighter">Prioridad</span>
-              <div class="flex items-center gap-1.5 mt-1">
-                <span 
-                  :class="req.weight > 10 
-                    ? 'bg-red-50 text-red-600 dark:bg-red-900/20 dark:text-red-400' 
-                    : 'bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400'"
-                  class="text-[10px] font-black uppercase px-2 py-0.5 rounded shadow-sm"
-                >
-                  {{ req.weight > 10 ? 'Alta' : 'Normal' }}
+              <div class="flex items-center gap-1.5">
+                <span class="size-2 rounded-full" :class="getPriorityInfo(req.weight).dot"></span>
+                <span class="text-sm font-bold" :class="getPriorityInfo(req.weight).color">
+                  {{ getPriorityInfo(req.weight).label }}
                 </span>
               </div>
+              <span class="text-[10px] text-slate-400 font-medium italic">
+                {{ getPriorityInfo(req.weight).subLabel }}
+              </span>
             </div>
           </div>
 
-          <div class="md:col-span-3">
+          <div class="md:col-span-2">
             <div class="flex items-center gap-2">
               <component 
                 :is="getStatusInfo(req.status).icon" 
