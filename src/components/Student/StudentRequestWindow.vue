@@ -7,7 +7,8 @@ import {
   InformationCircleIcon, 
   CloudArrowUpIcon,
   PaperAirplaneIcon,
-  TrashIcon
+  TrashIcon,
+  ArrowPathIcon
 } from '@heroicons/vue/24/solid'
 
 const API_URL = import.meta.env.VITE_API_URL
@@ -131,7 +132,7 @@ async function handleSubmit() {
       destinationGroupId: destinationGroupId.value,
       weight: finalWeight,
       studentComment: studentComment.value,
-      pdfPath: weight.value === 60 ? pdfUrl : '',
+      pdfPath: pdfUrl,
       status: 0 
     })
     close() 
@@ -270,7 +271,9 @@ function close() { emit('close') }
             class="disabled:opacity-20 disabled:grayscale text-white px-8 py-2.5 rounded-lg text-xs font-black uppercase shadow-lg transition-all active:scale-95 flex items-center gap-2"
           >
             <TrashIcon v-if="mode === 'delete'" class="w-4 h-4" />
+            <ArrowPathIcon v-else-if="isFormInvalid || uploading" class="w-4 h-4 animate-spin" />
             <PaperAirplaneIcon v-else class="w-4 h-4" />
+
           </button>
         </div>
       </div>

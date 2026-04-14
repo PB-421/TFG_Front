@@ -96,9 +96,8 @@ function openTransfer(group: Group) {
 }
 
 const filteredGroups = computed(() => {
-  return groups.value.filter(item => {
-
-    const groupsName = item.name
+  return myGroups.value.filter(item => {
+    const groupsName = item.name || ''
     const matchesName = groupsName.toLowerCase().includes(searchQuery.value.toLowerCase())
 
     const subjectsName = getSubjectName(item.subjectId)

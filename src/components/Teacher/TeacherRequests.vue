@@ -10,9 +10,6 @@ import {
   XCircleIcon, 
   QuestionMarkCircleIcon,
   PencilSquareIcon,
-  ChatBubbleLeftEllipsisIcon,
-  TrashIcon,
-  DocumentTextIcon,
   XMarkIcon,
   ExclamationCircleIcon
 } from '@heroicons/vue/24/solid'
@@ -31,6 +28,7 @@ interface RequestDto {
   teacherComment?: string;
   status: number;
   pdfPath?: string;
+  ManagedBy?: string;
 }
 
 interface Profile {
@@ -39,7 +37,7 @@ interface Profile {
   name: string;
 }
 
-interface Group { id: string; name: string; subjectId: string; }
+interface Group { id: string; name: string; subjectId: string; teacherId: string;}
 interface Subject { id: string; name: string; }
 
 // --- Estado ---
@@ -127,9 +125,22 @@ function getStatusInfo(status: number) {
     case 0: return { label: 'Pendiente', color: 'bg-amber-500', textColor: 'text-amber-500', icon: ClockIcon }
     case 1: return { label: 'Rechazada', color: 'bg-red-500', textColor: 'text-red-500', icon: XCircleIcon } 
     case 2: return { label: 'Aceptada', color: 'bg-green-500', textColor: 'text-green-600', icon: CheckCircleIcon }
+    case 3: return { label: 'Aprobación Parcial', color: 'bg-amber-500', textColor: 'text-amber-500', icon: ArrowPathIcon }
     default: return { label: 'Desconocido', color: 'bg-slate-400', textColor: 'text-slate-400', icon: QuestionMarkCircleIcon }
   }
 }
+
+const filteredRequests = computed(() => {
+  if (!teacherProfile.value) return []
+  
+  return requests.value.filter(req => {
+    const originGroup = allGroups.value.find(g => g.id === req.originGroupId)
+    const destGroup = allGroups.value.find(g => g.id === req.destinationGroupId)
+    
+    return originGroup?.teacherId === teacherProfile.value?.id || 
+           destGroup?.teacherId === teacherProfile.value?.id
+  })
+})
 
 const openReview = (req: RequestDto) => {
   selectedRequest.value = req
@@ -166,24 +177,45 @@ const sortedRequests = computed(() => {
   })
 })
 
-async function handleStatusUpdate(payload: { id: string, status: number, teacherComment: string }) {
+async function handleStatusUpdate(payload: { id: string, status: number, teacherComment: string}) {
   isSubmitting.value = true;
   try {
+    const req = requests.value.find(r => r.id === payload.id)
+    if (!req) return
+
+    const originGroup = allGroups.value.find(g => g.id === req.originGroupId)
+    const destGroup = allGroups.value.find(g => g.id === req.destinationGroupId)
+    
+    let finalStatus = payload.status
+
+    if (payload.status === 2) {
+      if (originGroup?.teacherId !== destGroup?.teacherId) {
+        if (req.status === 0) {
+          if(payload.teacherComment.length > 0) payload.teacherComment = "Comentario del profesor del Grupo '"+getGroupName(originGroup!.id)+"': "+payload.teacherComment
+          finalStatus = 3
+        } 
+        else if (req.status === 3) {
+          finalStatus = 2
+        }
+      } 
+    }
+
     const res = await fetch(`${API_URL}/api/requests/teacherUpdate/${payload.id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        status: payload.status,
-        teacherComment: payload.teacherComment
+        status: finalStatus,
+        teacherComment: payload.teacherComment,
+        managedBy: teacherProfile.value?.id
       }),
       credentials: 'include'
     })
 
     if (res.ok) {
-      alert.value = { show: true, message: 'Solicitud actualizada con éxito', type: 'success' }
+      const msg = finalStatus === 3 ? 'Aprobación parcial registrada' : 'Solicitud actualizada'
+      alert.value = { show: true, message: msg, type: 'success' }
       modalOpen.value = false
       await loadData()
-      setTimeout(() => alert.value.show = false, 4000)
     } else {
       throw new Error()
     }
@@ -215,7 +247,7 @@ onMounted(loadData)
     </div>
 
     <div v-else class="space-y-4">
-      <div v-for="req in sortedRequests" :key="req.id" 
+      <div v-for="req in filteredRequests" :key="req.id" 
         class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg flex overflow-hidden group hover:border-slate-300 dark:hover:border-slate-700 transition-all">
         
         <div :class="getStatusInfo(req.status).color" class="w-1.5"></div>
@@ -301,6 +333,7 @@ onMounted(loadData)
       :origin-name="selectedRequest ? getGroupName(selectedRequest.originGroupId) : ''"
       :dest-name="selectedRequest ? getGroupName(selectedRequest.destinationGroupId) : ''"
       :student-name="selectedRequest ? studentNames[selectedRequest.studentId] : ''"
+      :teacher-id="teacherProfile?.id"
       :loading="isSubmitting"
       @close="modalOpen = false"
       @submit="handleStatusUpdate"

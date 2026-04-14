@@ -18,6 +18,7 @@ const props = defineProps<{
   originName: string
   destName: string
   studentName?: string
+  teacherId?: string
   loading?: boolean
 }>()
 
@@ -34,7 +35,9 @@ watch(() => props.show, (newVal) => {
   }
 })
 
-const isButtonDisabled = computed(() => props.loading)
+const isButtonDisabled = computed(() => {
+  return props.loading || (props.request?.managedBy === props.teacherId);
+});
 
 function close() { emit('close') }
 
@@ -158,9 +161,14 @@ function handleAction(status: number) {
           </button>
           
           <div class="flex gap-2">
-            <button @click="handleAction(1)" :disabled="isButtonDisabled"
-              :class="isButtonDisabled ? 'opacity-50 grayscale' : 'hover:bg-red-50'"
-              class="px-6 py-2.5 rounded-lg text-xs font-black uppercase border border-red-200 text-red-600 transition-all flex items-center gap-2">
+            <button 
+              @click="handleAction(1)" 
+              :disabled="isButtonDisabled"
+              :class="[
+                isButtonDisabled ? 'opacity-50 cursor-not-allowed grayscale' : 'active:scale-95 hover:bg-red-600 hover:border-slate-800 hover:text-slate-800',
+                'px-6 py-2.5 rounded-lg text-xs font-black uppercase border border-red-600 text-red-600 transition-all flex items-center gap-2'
+              ]"
+            >
               <template v-if="loading && activeAction === 1">
                 <ArrowPathIcon class="w-4 h-4 animate-spin" />
                 <span>Procesando...</span>
@@ -171,16 +179,23 @@ function handleAction(status: number) {
               </template>
             </button>
 
-            <button @click="handleAction(2)" :disabled="isButtonDisabled"
-              :class="isButtonDisabled ? 'opacity-50 grayscale' : 'hover:bg-black active:scale-95'"
-              class="bg-[#262626] text-white px-8 py-2.5 rounded-lg text-xs font-black uppercase shadow-lg transition-all flex items-center gap-2">
+            <button 
+              @click="handleAction(2)" 
+              :disabled="isButtonDisabled"
+              :class="[
+                isButtonDisabled ? 'opacity-50 cursor-not-allowed grayscale' : 'hover:bg-black active:scale-95',
+                'bg-[#262626] text-white px-8 py-2.5 rounded-lg text-xs font-black uppercase shadow-lg transition-all flex items-center gap-2'
+              ]"
+            >
               <template v-if="loading && activeAction === 2">
                 <ArrowPathIcon class="w-4 h-4 animate-spin" />
                 <span>Actualizando...</span>
               </template>
               <template v-else>
                 <CheckCircleIcon class="w-4 h-4" />
-                <span>Aprobar Cambio</span>
+                <span>
+                  {{ request.status === 3 ? 'Completar Aprobación' : (request.status === 0 ? 'Aprobar Petición' : 'Actualizar') }}
+                </span>
               </template>
             </button>
           </div>

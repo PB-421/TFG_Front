@@ -6,6 +6,7 @@
   import { 
     PlusIcon, 
     ArrowRightIcon, 
+    ArrowPathIcon,
     CheckCircleIcon, 
     ClockIcon, 
     XCircleIcon, 
@@ -155,6 +156,7 @@
       case 0: return { label: 'Pendiente', color: 'bg-amber-500', textColor: 'text-amber-500', icon: ClockIcon }
       case 1: return { label: 'Rechazada', color: 'bg-red-500', textColor: 'text-red-500', icon: XCircleIcon } 
       case 2: return { label: 'Aceptada', color: 'bg-green-500', textColor: 'text-green-600', icon: CheckCircleIcon }
+      case 3: return { label: 'Aprobación Parcial', color: 'bg-amber-500', textColor: 'text-amber-500', icon: ArrowPathIcon } 
       default: return { label: 'Desconocido', color: 'bg-slate-400', textColor: 'text-slate-400', icon: QuestionMarkCircleIcon }
     }
   }
