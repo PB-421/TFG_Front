@@ -5,8 +5,11 @@ import {
   MagnifyingGlassIcon, 
   CheckCircleIcon, 
   InformationCircleIcon, 
-  ArrowsRightLeftIcon 
+  ArrowsRightLeftIcon,
+  ArrowPathIcon
 } from '@heroicons/vue/24/solid'
+
+const API_URL = import.meta.env.VITE_API_URL
 
 interface Profile {
   id: string
@@ -25,7 +28,7 @@ interface Group {
 const props = defineProps<{
   show: boolean
   sourceGroup: Group | null
-  availableGroups: Group[] // Grupos de la misma asignatura y profesor
+  availableGroups: Group[]
 }>()
 
 const emit = defineEmits(['close', 'transfer'])
@@ -35,6 +38,8 @@ const searchQuery = ref('')
 const selectedStudentId = ref<string | null>(null)
 const targetGroupId = ref('')
 const isSubmitting = ref(false)
+const isCheckingCapacity = ref(false)
+const freeCapacity = ref<number | null>(null)
 
 // Filtrar alumnos del grupo actual por nombre
 const filteredStudents = computed(() => {
@@ -47,6 +52,30 @@ const filteredStudents = computed(() => {
   )
 })
 
+const checkCapacity = async (groupId: string) => {
+  if (!groupId) return
+  
+  isCheckingCapacity.value = true
+  try {
+    const response = await fetch(`${API_URL}/api/schedules/groupCapacity/${groupId}`)
+    const capacity = await response.json()
+    freeCapacity.value = capacity
+  } catch (error) {
+    console.error("Error obteniendo capacidad:", error)
+    freeCapacity.value = 0
+  } finally {
+    isCheckingCapacity.value = false
+  }
+}
+
+watch(targetGroupId, (newId) => {
+  if (newId) {
+    checkCapacity(newId)
+  } else {
+    freeCapacity.value = null
+  }
+})
+
 // Resetear al cerrar o cambiar de grupo
 watch(() => props.show, (newVal) => {
   if (newVal) {
@@ -56,18 +85,24 @@ watch(() => props.show, (newVal) => {
   }
 })
 
-function handleTransfer() {
+async function handleTransfer() {
   if (!selectedStudentId.value || !targetGroupId.value || !props.sourceGroup) return
+  if (freeCapacity.value !== null && freeCapacity.value <= 0) return
 
+  isSubmitting.value = true
+  
   const student = props.sourceGroup.students.find(s => s.id === selectedStudentId.value)
   
-  // Emitimos el movimiento al componente padre
-  emit('transfer', {
-    studentId: selectedStudentId.value,
-    studentName: student?.name,
-    fromGroupId: props.sourceGroup.id,
-    toGroupId: targetGroupId.value
-  })
+  try {
+    await emit('transfer', {
+      studentId: selectedStudentId.value,
+      studentName: student?.name,
+      fromGroupId: props.sourceGroup.id,
+      toGroupId: targetGroupId.value
+    })
+  } finally {
+    isSubmitting.value = false
+  }
 }
 
 function close() {
@@ -87,7 +122,7 @@ function close() {
     <div v-if="show" class="fixed inset-0 z-150 flex items-center justify-center p-4">
       <div class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm" @click="close"></div>
 
-      <div class="relative bg-white dark:bg-slate-900 w-full max-w-2xl rounded-xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden transform transition-all">
+      <div class="relative bg-white dark:bg-slate-900 w-full max-w-2xl rounded-xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden">
         
         <div class="px-8 pt-8 pb-4 flex items-center justify-between border-b border-slate-100 dark:border-slate-800">
           <div>
@@ -122,9 +157,6 @@ function close() {
               </div>
 
               <div class="h-64 overflow-y-auto border border-slate-100 dark:border-slate-800 rounded-lg bg-slate-50/30 dark:bg-slate-900/50 custom-scrollbar">
-                <div v-if="filteredStudents.length === 0" class="p-8 text-center text-slate-400 text-xs italic">
-                  No se encontraron alumnos
-                </div>
                 <button 
                   v-for="student in filteredStudents" 
                   :key="student.id"
@@ -149,35 +181,41 @@ function close() {
                   2. Grupo Destino
                 </label>
                 <div class="space-y-2">
-                  <div v-if="availableGroups.length === 0" class="p-4 bg-orange-50 dark:bg-orange-900/10 border border-orange-100 dark:border-orange-900/20 rounded-lg">
-                    <p class="text-[10px] text-orange-600 font-bold uppercase leading-tight">
-                      No hay otros grupos disponibles para esta asignatura.
-                    </p>
-                  </div>
-                  <div v-else v-for="group in availableGroups" :key="group.id">
+                  <div v-for="group in availableGroups" :key="group.id">
                     <label class="relative flex items-center p-3 border border-slate-200 dark:border-slate-700 rounded-lg cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800 transition-all">
                       <input 
                         type="radio" 
-                        name="targetGroup" 
                         :value="group.id" 
                         v-model="targetGroupId"
                         class="accent-red-600 h-4 w-4"
                       />
                       <div class="ml-3">
                         <span class="block text-xs font-bold text-slate-700 dark:text-slate-200 uppercase">{{ group.name }}</span>
-                        <span class="block text-[10px] text-slate-400">{{ group.students?.length || 0 }} Alumnos actualmente</span>
+                        <span class="block text-[10px] text-slate-400">{{ group.students?.length || 0 }} Alumnos</span>
                       </div>
                     </label>
                   </div>
                 </div>
               </div>
 
-              <div v-if="selectedStudentId && targetGroupId" class="mt-auto p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-dashed border-slate-200 dark:border-slate-700">
-                <div class="flex items-center gap-3 text-slate-600 dark:text-slate-400">
-                  <InformationCircleIcon class="w-5 h-5 text-[#e4002b]" />
-                  <p class="text-[11px] leading-snug">
-                    Se moverá al alumno seleccionado al grupo <span class="font-bold text-slate-800 dark:text-white">{{ availableGroups.find(g => g.id === targetGroupId)?.name }}</span>.
-                  </p>
+              <div v-if="targetGroupId" class="p-4 rounded-xl border border-dashed transition-all"
+                   :class="freeCapacity !== null && freeCapacity <= 0 ? ' border-red-600' : 'border-slate-700'">
+                
+                <div v-if="isCheckingCapacity" class="flex items-center gap-2 text-slate-400">
+                  <ArrowPathIcon class="w-4 h-4 animate-spin" />
+                  <span class="text-[10px] uppercase font-bold">Verificando disponibilidad...</span>
+                </div>
+                
+                <div v-else-if="freeCapacity !== null" class="flex items-start gap-3">
+                  <InformationCircleIcon class="w-5 h-5" :class="freeCapacity <= 0 ? 'text-red-500' : 'text-[#e4002b]'" />
+                  <div>
+                    <p v-if="freeCapacity > 0" class="text-[11px] leading-snug text-slate-600 dark:text-slate-400">
+                      Capacidad disponible: <span class="font-bold text-green-600">{{ freeCapacity }} plazas</span>.
+                    </p>
+                    <p v-else class="text-[11px] leading-snug text-red-600 font-bold uppercase">
+                      Grupo sin plazas. No se pueden mover más alumnos aquí.
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>
@@ -186,16 +224,28 @@ function close() {
         </div>
 
         <div class="px-8 py-6 bg-slate-50 dark:bg-slate-900/80 border-t border-slate-100 dark:border-slate-800 flex items-center justify-end gap-3">
-          <button @click="close" class="px-6 py-2.5 rounded-lg text-xs font-black uppercase text-slate-400 hover:text-slate-600 transition-all">
+          <button 
+            @click="close" 
+            :disabled="isSubmitting"
+            class="px-6 py-2.5 rounded-lg text-xs font-black uppercase text-slate-400 hover:text-slate-600 disabled:opacity-30 transition-all"
+          >
             Cancelar
           </button>
+          
           <button 
             @click="handleTransfer"
-            :disabled="!selectedStudentId || !targetGroupId"
-            class="bg-[#262626] hover:bg-black disabled:opacity-20 disabled:grayscale text-white px-8 py-2.5 rounded-lg text-xs font-black uppercase shadow-lg transition-all active:scale-95 flex items-center gap-2"
+            :disabled="!selectedStudentId || !targetGroupId || isSubmitting || (freeCapacity !== null && freeCapacity <= 0) || isCheckingCapacity"
+            class="bg-[#262626] hover:bg-black disabled:opacity-50 disabled:grayscale text-white min-w-180px px-8 py-2.5 rounded-lg text-xs font-black uppercase shadow-lg transition-all active:scale-95 flex items-center justify-center gap-2"
           >
-            <ArrowsRightLeftIcon class="w-4 h-4" />
-            Confirmar Cambio
+            <template v-if="isSubmitting">
+              <ArrowPathIcon class="w-4 h-4 animate-spin" />
+              <span>Procesando...</span>
+            </template>
+
+            <template v-else>
+              <ArrowsRightLeftIcon class="w-4 h-4" />
+              Confirmar Cambio
+            </template>
           </button>
         </div>
       </div>

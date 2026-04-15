@@ -20,6 +20,7 @@ const props = defineProps<{
   studentName?: string
   teacherId?: string
   loading?: boolean
+  destId?: string
 }>()
 
 const emit = defineEmits(['close', 'submit'])
@@ -27,11 +28,30 @@ const emit = defineEmits(['close', 'submit'])
 const teacherComment = ref('')
 const showStudentCommentModal = ref(false)
 const activeAction = ref<number | null>(null)
+const freeCapacity = ref<number | null>(null)
+const isCheckingCapacity = ref(false)
+
+const fetchCapacity = async () => {
+  if (!props.destId) return
+  
+  isCheckingCapacity.value = true
+  try {
+    const response = await fetch(`/api/schedules/groupCapacity/${props.destId}`)
+    const capacity = await response.json()
+    freeCapacity.value = capacity
+  } catch (error) {
+    console.error("Error al verificar capacidad:", error)
+    freeCapacity.value = 0 
+  } finally {
+    isCheckingCapacity.value = false
+  }
+}
 
 watch(() => props.show, (newVal) => {
   if (newVal && props.request) {
     teacherComment.value = props.request.teacherComment || ''
     activeAction.value = null
+    fetchCapacity()
   }
 })
 
@@ -39,9 +59,18 @@ const isButtonDisabled = computed(() => {
   return props.loading || (props.request?.managedBy === props.teacherId);
 });
 
+const isApproveDisabled = computed(() => {
+  if (isButtonDisabled.value) return true
+  if (freeCapacity.value !== null && freeCapacity.value <= 0) return true
+  if (isCheckingCapacity.value) return true
+  return false
+})
+
 function close() { emit('close') }
 
 function handleAction(status: number) {
+  if (status === 2 && freeCapacity.value !== null && freeCapacity.value <= 0) return
+
   activeAction.value = status
   emit('submit', {
     id: props.request.id,
@@ -100,6 +129,21 @@ function handleAction(status: number) {
                   </div>
                 </div>
               </div>
+            </div>
+
+            <div v-if="freeCapacity !== null || isCheckingCapacity" class="mt-2">
+               <div v-if="isCheckingCapacity" class="flex items-center gap-2 text-slate-400 animate-pulse">
+                  <ArrowPathIcon class="w-3 h-3 animate-spin" />
+                  <span class="text-[9px] uppercase font-bold">Validando plazas en grupo destino...</span>
+               </div>
+               <div v-else-if="freeCapacity! <= 0" class="flex items-center gap-2 p-3 bg-red-50 dark:bg-red-900/10 border border-red-100 dark:border-red-900/20 rounded-lg">
+                  <InformationCircleIcon class="w-4 h-4 text-red-500" />
+                  <span class="text-[10px] text-red-600 dark:text-red-400 font-bold uppercase">Sin plazas: El grupo de destino está lleno.</span>
+               </div>
+               <div v-else class="flex items-center gap-2 p-3 bg-green-50 dark:bg-green-900/10 border border-green-100 dark:border-green-900/20 rounded-lg">
+                  <CheckCircleIcon class="w-4 h-4 text-green-500" />
+                  <span class="text-[10px] text-green-600 dark:text-green-400 font-bold uppercase">Plazas disponible: {{ freeCapacity }} plazas libres.</span>
+               </div>
             </div>
 
             <div>
@@ -181,9 +225,9 @@ function handleAction(status: number) {
 
             <button 
               @click="handleAction(2)" 
-              :disabled="isButtonDisabled"
+              :disabled="isButtonDisabled || isApproveDisabled"
               :class="[
-                isButtonDisabled ? 'opacity-50 cursor-not-allowed grayscale' : 'hover:bg-black active:scale-95',
+                isApproveDisabled || isButtonDisabled ? 'opacity-50 cursor-not-allowed grayscale' : 'hover:bg-black active:scale-95',
                 'bg-[#262626] text-white px-8 py-2.5 rounded-lg text-xs font-black uppercase shadow-lg transition-all flex items-center gap-2'
               ]"
             >

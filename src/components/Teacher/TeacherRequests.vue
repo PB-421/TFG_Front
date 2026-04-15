@@ -335,6 +335,7 @@ onMounted(loadData)
       :student-name="selectedRequest ? studentNames[selectedRequest.studentId] : ''"
       :teacher-id="teacherProfile?.id"
       :loading="isSubmitting"
+      :dest-id="selectedRequest?.destinationGroupId"
       @close="modalOpen = false"
       @submit="handleStatusUpdate"
     />
