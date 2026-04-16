@@ -11,6 +11,8 @@ import {
   ArrowPathIcon
 } from '@heroicons/vue/24/solid'
 
+const API_URL = import.meta.env.VITE_API_URL
+
 const props = defineProps<{
   show: boolean
   request: any
@@ -36,7 +38,7 @@ const fetchCapacity = async () => {
   
   isCheckingCapacity.value = true
   try {
-    const response = await fetch(`/api/schedules/groupCapacity/${props.destId}`)
+    const response = await fetch(`${API_URL}/api/schedules/groupCapacity/${props.destId}`)
     const capacity = await response.json()
     freeCapacity.value = capacity
   } catch (error) {

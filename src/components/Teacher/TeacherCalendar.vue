@@ -188,7 +188,7 @@ onMounted(fetchTeacherSchedules)
       <p class="text-slate-500 animate-pulse">Sincronizando...</p>
     </div>
 
-    <div v-else class="bg-white dark:bg-slate-900 border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+    <div v-else class="bg-white dark:bg-slate-900 border border-slate-200 rounded-xl shadow-sm">
       <div class="grid grid-cols-7 bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200">
         <div v-for="d in ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom']" :key="d" class="py-3 text-center text-[10px] font-bold text-slate-400 uppercase">{{ d }}</div>
       </div>
@@ -209,8 +209,8 @@ onMounted(fetchTeacherSchedules)
           </div>
 
           <div v-if="getSessionsForDay(day).length > 0" 
-              class="custom-tooltip absolute z-50 left-1/2 -translate-x-1/2 bottom-full mb-2 w-72 bg-white dark:bg-slate-900 border border-slate-200 shadow-2xl p-4 rounded-xl transition-all duration-200 opacity-0 invisible group-hover:opacity-100 group-hover:visible">
-            
+              class="custom-tooltip absolute z-50 left-1/2 -translate-x-1/2 w-72 bg-white dark:bg-slate-900 border border-slate-200 shadow-2xl p-4 rounded-xl transition-all duration-200 opacity-0 invisible group-hover:opacity-100 group-hover:visible"
+              :class="day <= 14 ? 'top-full mt-2' : 'bottom-full mb-2'">            
             <div class="flex items-center justify-between mb-4 border-b border-slate-100 pb-2">
               <div class="flex items-center gap-2">
                 <InformationCircleIcon class="size-4 text-[#e4002b]" />
@@ -243,7 +243,7 @@ onMounted(fetchTeacherSchedules)
                 </div>
               </div>
             </div>
-            <div class="tooltip-arrow"></div>
+            <div :class="day <= 14 ? 'tooltip-arrow-up' : 'tooltip-arrow'"></div>
           </div>
         </div>
       </div>
@@ -273,6 +273,18 @@ onMounted(fetchTeacherSchedules)
 .custom-scrollbar::-webkit-scrollbar-thumb {
   background: #cbd5e1;
   border-radius: 10px;
+}
+
+.tooltip-arrow-up {
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 8px solid transparent;
+  border-right: 8px solid transparent;
+  border-bottom: 8px solid white; /* Flecha hacia arriba */
 }
 
 .tooltip-arrow {
