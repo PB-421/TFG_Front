@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
+import { useAuthStore } from '@/stores/auth.store'
 import { 
   UsersIcon, 
   BookOpenIcon, 
@@ -14,6 +15,8 @@ import {
 } from '@heroicons/vue/24/solid'
 
 const API_URL = import.meta.env.VITE_API_URL
+const auth = useAuthStore()
+
 
 // --- Interfaces ---
 interface Profile { id: string; email: string; name: string; role: string }
@@ -28,6 +31,12 @@ interface AlgorithmResponse {
   details: string[]
 }
 
+interface Profile {
+  id: string;
+  email: string;
+  name: string;
+}
+
 // --- Estado ---
 const profiles = ref<Profile[]>([])
 const subjects = ref<Subject[]>([])
@@ -39,6 +48,7 @@ const loading = ref(true)
 const isRegistrationOpen = ref(false)
 const togglingRegistration = ref(false)
 const processingAlgorithm = ref(false)
+const adminProfile = ref<Profile | null>(null)
 
 // Estado para los modales
 const alert = ref({
@@ -59,8 +69,16 @@ const showAlert = (message: string, type: 'success' | 'error' = 'success') => {
 
 async function loadData() {
   try {
+
+    const userId = await auth.isMicrosoftUser()
+
+    const resProfile = await fetch(`${API_URL}/api/profiles/GetUser?id=${userId}`, { credentials: 'include' })
+    if (!resProfile.ok) throw new Error('Usuario no encontrado')
+    const profile: Profile = await resProfile.json()
+    adminProfile.value = profile
+
     const [usersRes, subjectsRes, gruposRes, locRes, horariosRes, controlRes] = await Promise.all([
-      fetch(`${API_URL}/api/profiles/GetAll`, { credentials:'include' }),
+      fetch(`${API_URL}/api/profiles/GetAll?adminId=${adminProfile.value.id}`, { credentials:'include' }),
       fetch(`${API_URL}/api/subjects`, { credentials:'include' }),
       fetch(`${API_URL}/api/groups`, { credentials:'include' }),
       fetch(`${API_URL}/api/locations`, { credentials:'include' }),
