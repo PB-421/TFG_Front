@@ -86,7 +86,7 @@ async function handleSubmit(data: Subject) {
 
   try {
     if (modalMode.value === 'create') {
-      response = await fetch(`${API_URL}/api/subjects?adminId=${userId}`, {
+      response = await fetch(`${API_URL}/api/subjects`, {
         method: 'POST',
         credentials: 'include',
         headers,
@@ -95,7 +95,7 @@ async function handleSubmit(data: Subject) {
     }
 
     if (modalMode.value === 'edit' && selectedSubject.value) {
-      response = await fetch(`${API_URL}/api/subjects/${selectedSubject.value.id}?adminId=${userId}`, {
+      response = await fetch(`${API_URL}/api/subjects/${selectedSubject.value.id}`, {
         method: 'PUT',
         credentials: 'include',
         headers,
@@ -104,7 +104,7 @@ async function handleSubmit(data: Subject) {
     }
 
     if (modalMode.value === 'delete' && selectedSubject.value) {
-      response = await fetch(`${API_URL}/api/subjects/${selectedSubject.value.id}?adminId=${userId}`, {
+      response = await fetch(`${API_URL}/api/subjects/${selectedSubject.value.id}`, {
         method: 'DELETE',
         credentials: 'include'
       })
