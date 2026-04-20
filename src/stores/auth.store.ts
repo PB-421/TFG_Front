@@ -81,7 +81,7 @@ export const useAuthStore = defineStore('auth', {
 
       const res = await fetch(`${API_URL}/api/auth/profile`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
         credentials: 'include',
         body: JSON.stringify(body)
       })
