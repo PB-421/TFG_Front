@@ -37,10 +37,6 @@ export const useAuthStore = defineStore('auth', {
       }
       return "00000000-0000-0000-0000-000000000000";
     },
-    async getAccessToken() {
-      const { data } = await supabase.auth.getSession();
-      return data.session?.access_token ?? null;
-    },
     // ---------------- LOGIN LOCAL ----------------
     async loginLocal(email: string, password: string): Promise<void> {
       this.loading = true

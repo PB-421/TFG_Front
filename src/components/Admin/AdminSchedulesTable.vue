@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
 import ModalWindow from '@/components/ModalWindow.vue'
+import { useAuthStore } from '@/stores/auth.store'
 import { 
   PlusIcon, MagnifyingGlassIcon, MapPinIcon, CalendarIcon, ClockIcon,
   PencilSquareIcon, TrashIcon, CalendarDaysIcon, CheckCircleIcon,
@@ -9,6 +10,7 @@ import {
 } from '@heroicons/vue/24/solid'
 
 const API_URL = import.meta.env.VITE_API_URL
+const auth = useAuthStore()
 
 // --- Interfaces ---
 interface Schedule {
@@ -81,11 +83,12 @@ const formatTime = (dateStr: string) => new Date(dateStr).toLocaleTimeString([],
 // --- Acciones de API ---
 async function fetchData() {
   loading.value = true
+  const userId = await auth.isMicrosoftUser()
   try {
     const [resSchedules, resGroups, resLocations] = await Promise.all([
-      fetch(`${API_URL}/api/schedules`, { credentials: 'include' }),
-      fetch(`${API_URL}/api/groups`, { credentials: 'include' }),
-      fetch(`${API_URL}/api/locations`, { credentials: 'include' })
+      fetch(`${API_URL}/api/schedules`, { credentials: 'include',headers: { 'Authorization': `${userId}` }}),
+      fetch(`${API_URL}/api/groups`, { credentials: 'include',headers: { 'Authorization': `${userId}` } }),
+      fetch(`${API_URL}/api/locations`, { credentials: 'include',headers: { 'Authorization': `${userId}` } })
     ])
     if (resSchedules.ok) schedules.value = await resSchedules.json()
     if (resGroups.ok) groups.value = await resGroups.json()
@@ -113,7 +116,8 @@ function openDelete(schedule: Schedule) {
 }
 
 async function handleSubmit(data: any) {
-  const headers = { 'Content-Type': 'application/json' }
+  const userId = await auth.isMicrosoftUser()
+  const headers = { 'Content-Type': 'application/json','Authorization': `${userId}` }
   let response;
   const payload = {
     Id: modalMode.value === 'edit' ? selectedSchedule.value?.id : undefined,
@@ -134,7 +138,7 @@ async function handleSubmit(data: any) {
       })
     } else if (modalMode.value === 'delete' && selectedSchedule.value) {
       response = await fetch(`${API_URL}/api/schedules/${selectedSchedule.value.id}`, {
-        method: 'DELETE', credentials: 'include'
+        method: 'DELETE', credentials: 'include', headers
       })
     }
     

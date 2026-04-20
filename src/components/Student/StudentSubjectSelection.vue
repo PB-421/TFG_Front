@@ -53,9 +53,9 @@ async function fetchData() {
     const userId = await auth.isMicrosoftUser(); 
     
     const [resAllSubjects, resUser, resControl] = await Promise.all([
-      fetch(`${API_URL}/api/subjects`, { credentials: 'include' }),
+      fetch(`${API_URL}/api/subjects`, { credentials: 'include',headers: { 'Authorization': `${userId}` } }),
       fetch(`${API_URL}/api/profiles/GetUser?id=${userId}`, { credentials: 'include' }),
-      fetch(`${API_URL}/api/control/matriculacion`, { credentials: 'include' }) 
+      fetch(`${API_URL}/api/control/matriculacion`, { credentials: 'include',headers: { 'Authorization': `${userId}` } }) 
     ])
 
     if (resAllSubjects.ok) allSubjects.value = await resAllSubjects.json()
@@ -102,7 +102,7 @@ async function saveChanges() {
   saving.value = true
   try {
     const userId = await auth.isMicrosoftUser()
-    const response = await fetch(`${API_URL}/api/profiles/UpdateUserSubjects/${userProfile.value.id}?userId=${userId}`, {
+    const response = await fetch(`${API_URL}/api/profiles/UpdateUserSubjects?userId=${userId}`, {
       method: 'PUT',
       credentials: 'include',
       headers: { 'Content-Type': 'application/json' },

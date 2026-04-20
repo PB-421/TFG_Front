@@ -70,7 +70,7 @@ async function loadDependencies() {
     const allUsers: User[] = await resProfiles.json()
     teachers.value = allUsers.filter(u => u.role.toLowerCase() === 'teacher')
   }
-  const resSubjects = await fetch(`${API_URL}/api/subjects`, { credentials: 'include' })
+  const resSubjects = await fetch(`${API_URL}/api/subjects`, { credentials: 'include',headers: { 'Authorization': `${userId}` } })
   if (resSubjects.ok) {
     subjects.value = await resSubjects.json()
   }
@@ -128,6 +128,7 @@ const hasChanges = computed(() => {
 })
 
 watch(() => props.item, async (value) => {
+  const userId = auth.isMicrosoftUser()
   if (!value) {
     resetForm()
     return
@@ -146,7 +147,8 @@ watch(() => props.item, async (value) => {
       isLocationInUse.value = false
       try {
         const res = await fetch(`${API_URL}/api/schedules/hasLocation/${value.id}`, { 
-          credentials: 'include' 
+          credentials: 'include',
+          headers: { 'Authorization': `${userId}` }
         })
         if (res.ok) {
           isLocationInUse.value = await res.json()

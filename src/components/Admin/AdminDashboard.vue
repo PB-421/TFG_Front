@@ -69,7 +69,6 @@ const showAlert = (message: string, type: 'success' | 'error' = 'success') => {
 
 async function loadData() {
   try {
-    const token = await auth.getAccessToken();
     const userId = await auth.isMicrosoftUser()
 
     const resProfile = await fetch(`${API_URL}/api/profiles/GetUser?id=${userId}`, { credentials: 'include' })
@@ -79,11 +78,11 @@ async function loadData() {
 
     const [usersRes, subjectsRes, gruposRes, locRes, horariosRes, controlRes] = await Promise.all([
       fetch(`${API_URL}/api/profiles/GetAll?adminId=${adminProfile.value.id}`, { credentials:'include' }),
-      fetch(`${API_URL}/api/subjects`, { credentials:'include', headers: { 'Authorization': `Bearer ${token}` } }),
-      fetch(`${API_URL}/api/groups`, { credentials:'include', headers: { 'Authorization': `Bearer ${token}` } }),
-      fetch(`${API_URL}/api/locations`, { credentials:'include', headers: { 'Authorization': `Bearer ${token}` } }),
-      fetch(`${API_URL}/api/schedules`, { credentials:'include', headers: { 'Authorization': `Bearer ${token}` } }),
-      fetch(`${API_URL}/api/control/matriculacion`, { credentials:'include', headers: { 'Authorization': `Bearer ${token}` } })
+      fetch(`${API_URL}/api/subjects`, { credentials:'include', headers: { 'Authorization': `${userId}` } }),
+      fetch(`${API_URL}/api/groups`, { credentials:'include', headers: { 'Authorization': `${userId}`  } }),
+      fetch(`${API_URL}/api/locations`, { credentials:'include', headers: { 'Authorization': `${userId}`  } }),
+      fetch(`${API_URL}/api/schedules`, { credentials:'include', headers: { 'Authorization': `${userId}`  } }),
+      fetch(`${API_URL}/api/control/matriculacion`, { credentials:'include', headers: { 'Authorization': `${userId}`  } })
     ])
 
     profiles.value = await usersRes.json()
@@ -105,12 +104,12 @@ async function loadData() {
 
 async function toggleRegistration() {
   togglingRegistration.value = true
-  const token = await auth.getAccessToken();
+  const userId = await auth.isMicrosoftUser()
   try {
     const res = await fetch(`${API_URL}/api/control/matriculacion`, {
       method: 'PUT',
       credentials: 'include',
-      headers: { 'Authorization': `Bearer ${token}` }
+      headers: { 'Authorization': `${userId}`}
     })
 
     if (res.ok) {
@@ -131,13 +130,13 @@ async function toggleRegistration() {
 
 async function runDistributionAlgorithm() {
   if (isRegistrationOpen.value) return 
-  const token = await auth.getAccessToken();
+  const userId = await auth.isMicrosoftUser()
   processingAlgorithm.value = true
   try {
     const res = await fetch(`${API_URL}/api/algorithms/FillGroups`, { 
       method: 'GET',
       credentials: 'include',
-      headers: { 'Authorization': `Bearer ${token}` }
+      headers: { 'Authorization': `${userId}` }
     })
 
     if (res.ok) {

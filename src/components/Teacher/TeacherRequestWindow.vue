@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, watch,computed } from 'vue'
 import CommentWindow from '../CommentWindow.vue';
+import { useAuthStore } from '@/stores/auth.store'
 import { 
   XMarkIcon, 
   ArrowDownIcon, 
@@ -12,6 +13,7 @@ import {
 } from '@heroicons/vue/24/solid'
 
 const API_URL = import.meta.env.VITE_API_URL
+const auth = useAuthStore()
 
 const props = defineProps<{
   show: boolean
@@ -35,10 +37,10 @@ const isCheckingCapacity = ref(false)
 
 const fetchCapacity = async () => {
   if (!props.destId) return
-  
+  const userId = await auth.isMicrosoftUser()
   isCheckingCapacity.value = true
   try {
-    const response = await fetch(`${API_URL}/api/schedules/groupCapacity/${props.destId}`)
+    const response = await fetch(`${API_URL}/api/schedules/groupCapacity/${props.destId}`,{credentials: 'include',headers: { 'Authorization': `${userId}` } })
     const capacity = await response.json()
     freeCapacity.value = capacity
   } catch (error) {

@@ -114,10 +114,10 @@
       studentProfile.value = profile
 
       const [resRequests, resGroups, resAllGroups, resSubjects] = await Promise.all([
-        fetch(`${API_URL}/api/requests/student/${profile.id}`, { credentials: 'include' }),
-        fetch(`${API_URL}/api/groups/student/${profile.id}`, { credentials: 'include' }),
-        fetch(`${API_URL}/api/groups`, { credentials: 'include' }),
-        fetch(`${API_URL}/api/subjects`, { credentials: 'include' })
+        fetch(`${API_URL}/api/requests/student/${profile.id}`, { credentials: 'include',headers: { 'Authorization': `${userId}` }  }),
+        fetch(`${API_URL}/api/groups/student/${profile.id}`, { credentials: 'include',headers: { 'Authorization': `${userId}` }  }),
+        fetch(`${API_URL}/api/groups`, { credentials: 'include',headers: { 'Authorization': `${userId}` }  }),
+        fetch(`${API_URL}/api/subjects`, { credentials: 'include',headers: { 'Authorization': `${userId}` }  })
       ])
 
       if (resRequests.ok) requests.value = await resRequests.json()
@@ -181,6 +181,7 @@
   }
 
   async function handleRequestSubmit(payload: any) {
+    const userId = await auth.isMicrosoftUser()
     if (!studentProfile.value) return;
     try {
       const isDelete = modalMode.value === 'delete'
@@ -195,7 +196,7 @@
 
       const res = await fetch(url, {
         method: method,
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json','Authorization': `${userId}` },
         body: isDelete ? null : JSON.stringify({
           ...payload,
           studentId: studentProfile.value.id,

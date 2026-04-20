@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
+import { useAuthStore } from '@/stores/auth.store'
 import { 
   XMarkIcon, 
   MagnifyingGlassIcon, 
@@ -10,6 +11,7 @@ import {
 } from '@heroicons/vue/24/solid'
 
 const API_URL = import.meta.env.VITE_API_URL
+const auth = useAuthStore()
 
 interface Profile {
   id: string
@@ -54,10 +56,10 @@ const filteredStudents = computed(() => {
 
 const checkCapacity = async (groupId: string) => {
   if (!groupId) return
-  
+  const userId = await auth.isMicrosoftUser()
   isCheckingCapacity.value = true
   try {
-    const response = await fetch(`${API_URL}/api/schedules/groupCapacity/${groupId}`)
+    const response = await fetch(`${API_URL}/api/schedules/groupCapacity/${groupId}`,{credentials: 'include',headers: { 'Authorization': `${userId}` }})
     const capacity = await response.json()
     freeCapacity.value = capacity
   } catch (error) {

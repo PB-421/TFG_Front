@@ -35,8 +35,9 @@ const selectedSubject = ref<Subject | null>(null)
 
 async function fetchData() {
   loading.value = true
+  const userId = await auth.isMicrosoftUser()
   try {
-    const res = await fetch(`${API_URL}/api/subjects`, { credentials: 'include' })
+    const res = await fetch(`${API_URL}/api/subjects`, { credentials: 'include',headers: { 'Authorization': `${userId}` } })
     if (res.ok) {
       subjects.value = await res.json()
     }
@@ -79,7 +80,7 @@ async function handleSubmit(data: Subject) {
 
   const userId = await auth.isMicrosoftUser();
 
-  const headers = { 'Content-Type': 'application/json' }
+  const headers = { 'Content-Type': 'application/json','Authorization': `${userId}` }
   let response;
 
   isSubmitting.value = true;
@@ -106,7 +107,8 @@ async function handleSubmit(data: Subject) {
     if (modalMode.value === 'delete' && selectedSubject.value) {
       response = await fetch(`${API_URL}/api/subjects/${selectedSubject.value.id}`, {
         method: 'DELETE',
-        credentials: 'include'
+        credentials: 'include',
+        headers
       })
     }
 

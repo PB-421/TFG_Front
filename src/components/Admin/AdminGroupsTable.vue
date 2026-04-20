@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
 import ModalWindow from '@/components/ModalWindow.vue'
+import { useAuthStore } from '@/stores/auth.store'
 import { 
   PlusIcon, 
   MagnifyingGlassIcon, 
@@ -16,6 +17,7 @@ import {
 } from '@heroicons/vue/24/solid'
 
 const API_URL = import.meta.env.VITE_API_URL
+const auth = useAuthStore()
 
 interface Group {
   id?: string
@@ -46,12 +48,13 @@ const getTeacherName = (id?: string) => teachers.value.find(t => t.id === id)?.n
 
 async function fetchData() {
   loading.value = true
+  const userId = await auth.isMicrosoftUser()
   try {
     // Cargamos todo en paralelo para mayor velocidad
     const [resGroups, resSubjects, resProfiles] = await Promise.all([
-      fetch(`${API_URL}/api/groups`, { credentials: 'include' }),
-      fetch(`${API_URL}/api/subjects`, { credentials: 'include' }),
-      fetch(`${API_URL}/api/profiles/GetAll`, { credentials: 'include' })
+      fetch(`${API_URL}/api/groups`, { credentials: 'include',headers: { 'Authorization': `${userId}` } }),
+      fetch(`${API_URL}/api/subjects`, { credentials: 'include',headers: { 'Authorization': `${userId}` } }),
+      fetch(`${API_URL}/api/profiles/GetAll`, { credentials: 'include',headers: { 'Authorization': `${userId}` } })
     ])
 
     if (resGroups.ok) groups.value = await resGroups.json()
@@ -101,7 +104,8 @@ const filteredGroups = computed(() => {
 })
 
 async function handleSubmit(data: any) {
-  const headers = { 'Content-Type': 'application/json' }
+  const userId = await auth.isMicrosoftUser()
+  const headers = { 'Content-Type': 'application/json','Authorization': `${userId}` }
   let response;
   isSubmitting.value = true;
   try {
@@ -135,7 +139,8 @@ async function handleSubmit(data: any) {
     if (modalMode.value === 'delete' && selectedGroup.value) {
       response = await fetch(`${API_URL}/api/groups/${selectedGroup.value.id}`, {
         method: 'DELETE',
-        credentials: 'include'
+        credentials: 'include',
+        headers
       })
     }
 

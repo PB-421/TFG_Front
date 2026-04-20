@@ -70,8 +70,8 @@ async function fetchData() {
     
     const [resProfile, resGroups, resSubjects] = await Promise.all([
       fetch(`${API_URL}/api/profiles/GetUser?id=${userId}`, { credentials: 'include' }),
-      fetch(`${API_URL}/api/groups`, { credentials: 'include' }),
-      fetch(`${API_URL}/api/subjects`, { credentials: 'include' })
+      fetch(`${API_URL}/api/groups`, { credentials: 'include',headers: { 'Authorization': `${userId}` } }),
+      fetch(`${API_URL}/api/subjects`, { credentials: 'include',headers: { 'Authorization': `${userId}` } })
     ])
 
     if (resSubjects.ok) subjects.value = await resSubjects.json()
@@ -109,6 +109,7 @@ const filteredGroups = computed(() => {
 
 async function handleTransfer(data: { studentId: string, fromGroupId: string, toGroupId: string }) {
   try {
+    const userId = await auth.isMicrosoftUser()
     const fromGroup = groups.value.find(g => g.id === data.fromGroupId)
     const toGroup = groups.value.find(g => g.id === data.toGroupId)
 
@@ -125,13 +126,13 @@ async function handleTransfer(data: { studentId: string, fromGroupId: string, to
       fetch(`${API_URL}/api/groups/${fromGroup.id}`, {
         method: 'PUT',
         credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json','Authorization': `${userId}` },
         body: JSON.stringify({ ...fromGroup, Students: updatedFromStudents })
       }),
       fetch(`${API_URL}/api/groups/${toGroup.id}`, {
         method: 'PUT',
         credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json','Authorization': `${userId}` },
         body: JSON.stringify({ ...toGroup, Students: updatedToStudents })
       })
     ])

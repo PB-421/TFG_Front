@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted,computed } from 'vue'
 import ModalWindow from '@/components/ModalWindow.vue'
+import { useAuthStore } from '@/stores/auth.store'
 import { 
   PlusIcon, 
   MagnifyingGlassIcon, 
@@ -15,6 +16,7 @@ import {
 } from '@heroicons/vue/24/solid'
 
 const API_URL = import.meta.env.VITE_API_URL
+const auth = useAuthStore()
 
 interface Location {
   id?: string
@@ -33,8 +35,9 @@ const selectedLocation = ref<Location | null>(null)
 
 async function fetchData() {
   loading.value = true
+  const userId = await auth.isMicrosoftUser()
   try {
-    const res = await fetch(`${API_URL}/api/locations`, { credentials: 'include' })
+    const res = await fetch(`${API_URL}/api/locations`, { credentials: 'include' ,headers: { 'Authorization': `${userId}` }})
     if (res.ok) {
       locations.value = await res.json()
     }
@@ -74,7 +77,8 @@ const filteredLocations = computed(() => {
 })
 
 async function handleSubmit(data: Location) {
-  const headers = { 'Content-Type': 'application/json' }
+  const userId = await auth.isMicrosoftUser()
+  const headers = { 'Content-Type': 'application/json','Authorization': `${userId}` }
   let response;
   
   isSubmitting.value = true;
@@ -101,7 +105,8 @@ async function handleSubmit(data: Location) {
     if (modalMode.value === 'delete' && selectedLocation.value) {
       response = await fetch(`${API_URL}/api/locations/${selectedLocation.value.id}`, {
         method: 'DELETE',
-        credentials: 'include'
+        credentials: 'include',
+        headers
       })
     }
 

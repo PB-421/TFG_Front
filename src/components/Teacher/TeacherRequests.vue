@@ -71,9 +71,9 @@ async function loadData() {
       teacherProfile.value = profile
     
     const [resRequests, resGroups, resSubjects] = await Promise.all([
-      fetch(`${API_URL}/api/requests/teacher/${profile.id}`, { credentials: 'include' }),
-      fetch(`${API_URL}/api/groups`, { credentials: 'include' }),
-      fetch(`${API_URL}/api/subjects`, { credentials: 'include' })
+      fetch(`${API_URL}/api/requests/teacher/${profile.id}`, { credentials: 'include',headers: { 'Authorization': `${userId}` } }),
+      fetch(`${API_URL}/api/groups`, { credentials: 'include',headers: { 'Authorization': `${userId}` } }),
+      fetch(`${API_URL}/api/subjects`, { credentials: 'include',headers: { 'Authorization': `${userId}` } })
     ])
 
     if (resRequests.ok)
@@ -178,6 +178,7 @@ const sortedRequests = computed(() => {
 })
 
 async function handleStatusUpdate(payload: { id: string, status: number, teacherComment: string}) {
+  const userId = auth.isMicrosoftUser()
   isSubmitting.value = true;
   try {
     const req = requests.value.find(r => r.id === payload.id)
@@ -202,7 +203,7 @@ async function handleStatusUpdate(payload: { id: string, status: number, teacher
 
     const res = await fetch(`${API_URL}/api/requests/teacherUpdate/${payload.id}`, {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json','Authorization': `${userId}`},
       body: JSON.stringify({
         status: finalStatus,
         teacherComment: payload.teacherComment,

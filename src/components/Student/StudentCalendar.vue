@@ -75,13 +75,13 @@ async function fetchStudentSchedules() {
   try {
     const [resProfile, resAllSubjects] = await Promise.all([
       fetch(`${API_URL}/api/profiles/GetUser?id=${userId}`, { credentials: 'include' }),
-      fetch(`${API_URL}/api/subjects`, { credentials: 'include' })
+      fetch(`${API_URL}/api/subjects`, { credentials: 'include',headers: { 'Authorization': `${userId}` }  })
     ]);
 
     if (!resProfile.ok) throw new Error('Usuario no encontrado');
     if(resAllSubjects) subjects.value = await resAllSubjects.json()
     const data:Promise<Profile> = await resProfile.json()
-    const resGroups = await fetch(`${API_URL}/api/groups/student/${(await data).id}`, { credentials: 'include' });
+    const resGroups = await fetch(`${API_URL}/api/groups/student/${(await data).id}`, { credentials: 'include',headers: { 'Authorization': `${userId}` }  });
     if (!resGroups.ok) throw new Error("Error cargando grupos");
     const groups: Group[] = await resGroups.json();
     const groupSubjectRelation: MapSubjects[] = groups.map(g => ({
@@ -98,7 +98,7 @@ async function fetchStudentSchedules() {
 
     // 2. Hacemos una petición por cada groupId
     const fetches = groupIds.map(id =>
-      fetch(`${API_URL}/api/schedules/group/${id}`, { credentials: 'include' })
+      fetch(`${API_URL}/api/schedules/group/${id}`, { credentials: 'include',headers: { 'Authorization': `${userId}` }  })
         .then(res => {
           if (!res.ok) throw new Error(`Error cargando schedules para grupo ${id}`);
           return res.json() as Promise<Schedule[]>;

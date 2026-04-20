@@ -76,8 +76,8 @@ async function fetchTeacherSchedules() {
   try {
     // 1. Obtenemos perfil y todas las asignaturas
     const [resProfile, resAllSubjects] = await Promise.all([
-      fetch(`${API_URL}/api/profiles/GetUser?id=${userId}`, { credentials: 'include' }),
-      fetch(`${API_URL}/api/subjects`, { credentials: 'include' })
+      fetch(`${API_URL}/api/profiles/GetUser?id=${userId}`, { credentials: 'include'}),
+      fetch(`${API_URL}/api/subjects`, { credentials: 'include',headers: { 'Authorization': `${userId}` } })
     ]);
 
     if (!resProfile.ok) throw new Error('Usuario no encontrado');
@@ -89,7 +89,7 @@ async function fetchTeacherSchedules() {
     // 2. Obtenemos los grupos. 
     // Nota: Aquí asumo que existe un endpoint /api/groups/teacher/{id} 
     // o que filtramos la lista general por teacherId.
-    const resGroups = await fetch(`${API_URL}/api/groups`, { credentials: 'include' });
+    const resGroups = await fetch(`${API_URL}/api/groups`, { credentials: 'include',headers: { 'Authorization': `${userId}` }});
     if (!resGroups.ok) throw new Error("Error cargando grupos");
     
     const allGroups: Group[] = await resGroups.json();
@@ -111,7 +111,7 @@ async function fetchTeacherSchedules() {
 
     // 3. Obtenemos horarios de esos grupos específicos
     const fetches = groupIds.map(id =>
-      fetch(`${API_URL}/api/schedules/group/${id}`, { credentials: 'include' })
+      fetch(`${API_URL}/api/schedules/group/${id}`, { credentials: 'include' ,headers: { 'Authorization': `${userId}` }})
         .then(res => res.ok ? (res.json() as Promise<Schedule[]>) : [])
         .catch(() => [] as Schedule[])
     );

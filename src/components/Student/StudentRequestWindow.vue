@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
 import { createClient } from '@supabase/supabase-js'
+  import { useAuthStore } from '@/stores/auth.store'
 import { 
   XMarkIcon, 
   ExclamationTriangleIcon, 
@@ -12,6 +13,7 @@ import {
 } from '@heroicons/vue/24/solid'
 
 const API_URL = import.meta.env.VITE_API_URL
+const auth = useAuthStore()
 
 const props = defineProps<{
   show: boolean
@@ -80,7 +82,9 @@ const isFormInvalid = computed(() => {
 async function uploadToSupabase(): Promise<string> {
   if (!file.value) return ''
   uploading.value = true
+  const userId = await auth.isMicrosoftUser()
   try {
+    if(userId === "00000000-0000-0000-0000-000000000000"){
     const res = await fetch(`${API_URL}/api/profiles/GetSession`,{credentials: 'include'});
     const session = await res.json();
     await supabase.auth.setSession({ access_token: session.accessToken, refresh_token: session.refreshToken })
@@ -92,6 +96,14 @@ async function uploadToSupabase(): Promise<string> {
 
     const { data: { publicUrl } } = supabase.storage.from('RequestsPdfs').getPublicUrl(data.path)
     return publicUrl
+    } else {
+      const fileName = `${userId}/${Date.now()}.${file.value.name.split('.').pop()}`
+      const { data, error } = await supabase.storage.from('RequestsPdfs').upload(fileName, file.value)
+      if (error) throw error
+
+      const { data: { publicUrl } } = supabase.storage.from('RequestsPdfs').getPublicUrl(data.path)
+      return publicUrl
+    }
   } finally {
     uploading.value = false
   }
