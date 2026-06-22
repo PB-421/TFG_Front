@@ -54,7 +54,7 @@ async function fetchData() {
     const [resGroups, resSubjects, resProfiles] = await Promise.all([
       fetch(`${API_URL}/api/groups`, { credentials: 'include',headers: { 'Authorization': `${userId}` } }),
       fetch(`${API_URL}/api/subjects`, { credentials: 'include',headers: { 'Authorization': `${userId}` } }),
-      fetch(`${API_URL}/api/profiles/GetAll`, { credentials: 'include',headers: { 'Authorization': `${userId}` } })
+      fetch(`${API_URL}/api/profiles/GetAll?adminId=${userId}`, { credentials: 'include',headers: { 'Authorization': `${userId}` } })
     ])
 
     if (resGroups.ok) groups.value = await resGroups.json()
